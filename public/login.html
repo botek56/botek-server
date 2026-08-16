@@ -24,8 +24,15 @@
     <div class="login-wrapper">
         <div class="login-card" style="position: relative;">
             <div style="position: absolute; top: 18px; left: 18px; z-index: 20;">
-                <button type="button" onclick="openGetAppModal()" style="font-size: 11px; padding: 5px 11px; border-radius: 20px; background: rgba(16, 185, 129, 0.15); color: var(--blynk-green); border: 1px solid rgba(16, 185, 129, 0.35); display: inline-flex; align-items: center; gap: 5px; font-weight: 700; cursor: pointer;" title="Get BOTEK App">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                <button type="button" onclick="openGetAppModal()"
+                    style="font-size: 11px; padding: 5px 11px; border-radius: 20px; background: rgba(16, 185, 129, 0.15); color: var(--blynk-green); border: 1px solid rgba(16, 185, 129, 0.35); display: inline-flex; align-items: center; gap: 5px; font-weight: 700; cursor: pointer;"
+                    title="Get BOTEK App">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
                     <span data-i18n="get_app_btn">Get App</span>
                 </button>
             </div>
@@ -33,7 +40,7 @@
             <div class="login-header">
                 <div class="brand-badge">
                     <span class="pulse-dot"></span>
-                    <span>BOTEK IoT CONSOLE</span>
+                    <span>BOTEK IoT CONSOLE v2.0</span>
                 </div>
                 <h1 style="display: flex; align-items: center; justify-content: center; gap: 10px;">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--blynk-green)"
@@ -42,7 +49,8 @@
                     </svg>
                     <span data-i18n="login_title">Sign In to Console</span>
                 </h1>
-                <p style="color: var(--text-muted); font-size: 13px; margin-top: 6px;" data-i18n="login_subtitle">IoT Console & Device Management Portal</p>
+                <p style="color: var(--text-muted); font-size: 13px; margin-top: 6px;" data-i18n="login_subtitle">IoT
+                    Console & Device Management Portal</p>
             </div>
 
             <div class="form-group">
@@ -55,7 +63,8 @@
                             <circle cx="12" cy="7" r="4"></circle>
                         </svg>
                     </span>
-                    <input type="text" id="username" placeholder="Enter username" data-i18n-placeholder="ph_username" required autofocus>
+                    <input type="text" id="username" placeholder="Enter username" data-i18n-placeholder="ph_username"
+                        required autofocus>
                 </div>
             </div>
 
@@ -69,7 +78,8 @@
                             <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                         </svg>
                     </span>
-                    <input type="password" id="password" placeholder="Enter password" data-i18n-placeholder="ph_password" required>
+                    <input type="password" id="password" placeholder="Enter password"
+                        data-i18n-placeholder="ph_password" required>
                 </div>
             </div>
 
@@ -85,8 +95,10 @@
             </button>
 
             <div style="margin-top: 20px; text-align: center; font-size: 13px; color: var(--text-muted);">
-                <span data-i18n="no_account">Don't have a Client account?</span> <a href="javascript:void(0)" onclick="openRegisterModal()"
-                    style="color: var(--blynk-green); font-weight: 700; text-decoration: underline;" data-i18n="register_link">Register New Account</a>
+                <span data-i18n="no_account">Don't have a Client account?</span> <a href="javascript:void(0)"
+                    onclick="openRegisterModal()"
+                    style="color: var(--blynk-green); font-weight: 700; text-decoration: underline;"
+                    data-i18n="register_link">Register New Account</a>
             </div>
 
             <div id="message" class="alert-message" style="display: none;"></div>
@@ -111,35 +123,48 @@
             </div>
             <div class="modal-body" style="padding: 20px 24px;">
                 <div class="form-group" style="margin-bottom: 14px;">
-                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted);" data-i18n="username_label">Username</label>
+                    <label
+                        style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted);"
+                        data-i18n="username_label">Username</label>
                     <input type="text" id="regUsername" placeholder="Enter username" data-i18n-placeholder="ph_username"
                         style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; font-size: 14px;">
                 </div>
                 <div class="form-group" style="margin-bottom: 14px;">
-                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted);" data-i18n="full_name_label">Full Name</label>
-                    <input type="text" id="regFullName" placeholder="Enter full name" data-i18n-placeholder="ph_full_name"
+                    <label
+                        style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted);"
+                        data-i18n="full_name_label">Full Name</label>
+                    <input type="text" id="regFullName" placeholder="Enter full name"
+                        data-i18n-placeholder="ph_full_name"
                         style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; font-size: 14px;">
                 </div>
                 <div class="form-group" style="margin-bottom: 14px;">
-                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted);" data-i18n="email_label">Email Address</label>
+                    <label
+                        style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted);"
+                        data-i18n="email_label">Email Address</label>
                     <input type="email" id="regEmail" placeholder="Enter email address" data-i18n-placeholder="ph_email"
                         style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; font-size: 14px;">
                 </div>
                 <div class="form-group" style="margin-bottom: 14px;">
-                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted);" data-i18n="password_label">Password</label>
+                    <label
+                        style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted);"
+                        data-i18n="password_label">Password</label>
                     <input type="password" id="regPassword" placeholder="••••••••" data-i18n-placeholder="ph_password"
                         style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; font-size: 14px;">
                 </div>
                 <div class="form-group" style="margin-bottom: 14px;">
-                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted);" data-i18n="confirm_password_label">Confirm Password</label>
-                    <input type="password" id="regConfirmPassword" placeholder="••••••••" data-i18n-placeholder="ph_password"
+                    <label
+                        style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted);"
+                        data-i18n="confirm_password_label">Confirm Password</label>
+                    <input type="password" id="regConfirmPassword" placeholder="••••••••"
+                        data-i18n-placeholder="ph_password"
                         style="width: 100%; padding: 10px 12px; background: rgba(15, 23, 42, 0.8); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; font-size: 14px;">
                 </div>
                 <div id="regMessage" class="alert-message" style="display: none; margin-top: 10px;"></div>
             </div>
             <div class="modal-footer"
                 style="padding: 16px 24px; display: flex; justify-content: flex-end; gap: 12px; border-top: 1px solid var(--border-color);">
-                <button type="button" class="btn-secondary" onclick="closeRegisterModal()" data-i18n="cancel_btn">Close</button>
+                <button type="button" class="btn-secondary" onclick="closeRegisterModal()"
+                    data-i18n="cancel_btn">Close</button>
                 <button type="button" class="btn-login" style="margin-top: 0; width: auto; padding: 10px 20px;"
                     onclick="registerUser()" data-i18n="register_btn">Register Now</button>
             </div>
@@ -151,56 +176,86 @@
         <div class="modal-box" style="max-width: 520px; width: 92%;">
             <div class="modal-header">
                 <h3 style="display: flex; align-items: center; gap: 8px; margin: 0; font-size: 17px; color: #fff;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blynk-green)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--blynk-green)"
+                        stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                        <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                    </svg>
                     <span data-i18n="get_app_modal_title">Download & Install BOTEK App</span>
                 </h3>
                 <button type="button" class="modal-close-btn" onclick="closeGetAppModal()">✖</button>
             </div>
             <div class="modal-body" style="padding: 20px 24px;">
-                <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;" data-i18n="get_app_modal_desc">
+                <div style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;"
+                    data-i18n="get_app_modal_desc">
                     Select your device platform to install BOTEK IoT application:
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 12px;">
                     <!-- Windows -->
-                    <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-                        <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(56, 189, 248, 0.15); display: flex; align-items: center; justify-content: center; color: #38bdf8; flex-shrink: 0;">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                    <div
+                        style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                        <div
+                            style="width: 42px; height: 42px; border-radius: 10px; background: rgba(56, 189, 248, 0.15); display: flex; align-items: center; justify-content: center; color: #38bdf8; flex-shrink: 0;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                <line x1="8" y1="21" x2="16" y2="21"></line>
+                                <line x1="12" y1="17" x2="12" y2="21"></line>
+                            </svg>
                         </div>
                         <div style="flex: 1; min-width: 180px;">
                             <div style="font-weight: 700; color: #fff; font-size: 14px;">Windows Desktop</div>
-                            <div style="font-size: 12px; color: var(--text-muted);" data-i18n="platform_windows_desc">Windows Standalone Desktop App (PWA)</div>
+                            <div style="font-size: 12px; color: var(--text-muted);" data-i18n="platform_windows_desc">
+                                Windows Standalone Desktop App (PWA)</div>
                         </div>
-                        <button type="button" class="btn-secondary" onclick="triggerPwaInstall()" style="font-size: 12px; padding: 6px 14px; background: var(--blynk-green); color: #020617; font-weight: 700; border: none; border-radius: 8px; cursor: pointer;">
+                        <button type="button" class="btn-secondary" onclick="triggerPwaInstall()"
+                            style="font-size: 12px; padding: 6px 14px; background: var(--blynk-green); color: #020617; font-weight: 700; border: none; border-radius: 8px; cursor: pointer;">
                             <span data-i18n="btn_install_now">Install App Now</span>
                         </button>
                     </div>
 
                     <!-- Android -->
-                    <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px;">
-                        <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(16, 185, 129, 0.15); display: flex; align-items: center; justify-content: center; color: var(--blynk-green); flex-shrink: 0;">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+                    <div
+                        style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px;">
+                        <div
+                            style="width: 42px; height: 42px; border-radius: 10px; background: rgba(16, 185, 129, 0.15); display: flex; align-items: center; justify-content: center; color: var(--blynk-green); flex-shrink: 0;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                                <line x1="12" y1="18" x2="12.01" y2="18"></line>
+                            </svg>
                         </div>
                         <div style="flex: 1;">
                             <div style="font-weight: 700; color: #fff; font-size: 14px;">Android Mobile</div>
-                            <div style="font-size: 11px; color: var(--blynk-green); margin-top: 2px;" data-i18n="guide_android">Open Chrome ➔ Tap Menu (⋮) ➔ Add to Home Screen</div>
+                            <div style="font-size: 11px; color: var(--blynk-green); margin-top: 2px;"
+                                data-i18n="guide_android">Open Chrome ➔ Tap Menu (⋮) ➔ Add to Home Screen</div>
                         </div>
                     </div>
 
                     <!-- iOS -->
-                    <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px;">
-                        <div style="width: 42px; height: 42px; border-radius: 10px; background: rgba(245, 158, 11, 0.15); display: flex; align-items: center; justify-content: center; color: var(--blynk-amber); flex-shrink: 0;">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"></path></svg>
+                    <div
+                        style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 14px;">
+                        <div
+                            style="width: 42px; height: 42px; border-radius: 10px; background: rgba(245, 158, 11, 0.15); display: flex; align-items: center; justify-content: center; color: var(--blynk-amber); flex-shrink: 0;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z">
+                                </path>
+                            </svg>
                         </div>
                         <div style="flex: 1;">
                             <div style="font-weight: 700; color: #fff; font-size: 14px;">iOS (iPhone / iPad)</div>
-                            <div style="font-size: 11px; color: var(--blynk-amber); margin-top: 2px;" data-i18n="guide_ios">Open Safari ➔ Tap Share Button ➔ Add to Home Screen</div>
+                            <div style="font-size: 11px; color: var(--blynk-amber); margin-top: 2px;"
+                                data-i18n="guide_ios">Open Safari ➔ Tap Share Button ➔ Add to Home Screen</div>
                         </div>
                     </div>
                 </div>
             </div>
-            <div class="modal-footer" style="padding: 14px 24px; display: flex; justify-content: flex-end; border-top: 1px solid var(--border-color);">
-                <button type="button" class="btn-secondary" onclick="closeGetAppModal()" data-i18n="cancel_btn">Close</button>
+            <div class="modal-footer"
+                style="padding: 14px 24px; display: flex; justify-content: flex-end; border-top: 1px solid var(--border-color);">
+                <button type="button" class="btn-secondary" onclick="closeGetAppModal()"
+                    data-i18n="cancel_btn">Close</button>
             </div>
         </div>
     </div>
