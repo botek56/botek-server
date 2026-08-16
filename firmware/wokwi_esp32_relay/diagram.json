@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "author": "BOTEK IoT Console",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "wokwi-esp32-devkit-v1", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    {
+      "type": "wokwi-relay-module",
+      "id": "relay1",
+      "top": -120,
+      "left": 180,
+      "attrs": { "color": "blue" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led1",
+      "top": -140,
+      "left": 320,
+      "attrs": { "color": "green" }
+    }
+  ],
+  "connections": [
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+    [ "esp:GND.1", "relay1:GND", "black", [ "v0" ] ],
+    [ "esp:5V", "relay1:VCC", "red", [ "v0" ] ],
+    [ "esp:D26", "relay1:IN", "green", [ "v0" ] ],
+    [ "relay1:NO", "led1:A", "green", [ "v0" ] ],
+    [ "esp:GND.2", "led1:C", "black", [ "v0" ] ]
+  ],
+  "dependencies": {}
+}

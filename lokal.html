@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BOTEK IoT | Login</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark">
+
+    <div class="login-box">
+        <h1>⚡ BOTEK IoT</h1>
+        <h2>Sign In to Dashboard</h2>
+
+        <input id="username" type="text" placeholder="Username" autocomplete="username">
+        <input id="password" type="password" placeholder="Password" autocomplete="current-password">
+
+        <button onclick="login()">LOGIN TO SYSTEM</button>
+
+        <p id="message"></p>
+    </div>
+
+    <script>
+        async function login() {
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const messageEl = document.getElementById("message");
+
+            if (!username || !password) {
+                messageEl.innerText = "Isi username dan password";
+                return;
+            }
+
+            try {
+                const response = await fetch("/api/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    window.location.href = "index.html";
+                } else {
+                    messageEl.innerText = data.message || "Username atau password salah";
+                }
+            } catch (err) {
+                messageEl.innerText = "Gagal terhubung ke server";
+            }
+        }
+
+        // Allow pressing Enter key to login
+        document.querySelectorAll("input").forEach(input => {
+            input.addEventListener("keypress", (e) => {
+                if (e.key === "Enter") login();
+            });
+        });
+    </script>
+</body>
+</html>
