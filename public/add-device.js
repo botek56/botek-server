@@ -11,7 +11,8 @@ const sensorCatalog = [
     { id: "freq", nameKey: "sensor_freq", name: "Frequency", type: "Frequency", unit: "Hz", icon: "∿", category: "Energy Monitor" },
     { id: "press", nameKey: "sensor_press", name: "Pressure", type: "Pressure", unit: "bar", icon: "▲", category: "Monitoring" },
     { id: "gas", nameKey: "sensor_gas", name: "Gas Quality", type: "Gas", unit: "ppm", icon: "∿", category: "Monitoring" },
-    { id: "light", nameKey: "sensor_light", name: "Light Intensity", type: "Light", unit: "Lux", icon: "☼", category: "Monitoring" }
+    { id: "light", nameKey: "sensor_light", name: "Light Intensity", type: "Light", unit: "Lux", icon: "☼", category: "Monitoring" },
+    { id: "dimmer", nameKey: "sensor_dimmer", name: "PWM Dimmer / Speed Control", type: "Dimmer", unit: "%", icon: "🎚️", category: "Control" }
 ];
 
 let selectedSensorIndices = new Set();

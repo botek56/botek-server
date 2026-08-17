@@ -546,16 +546,11 @@ app.get("/api/admin/users", requireAuth, (req, res) => {
 
     db.all(
         `SELECT users.id, users.username, users.email, users.full_name, users.role, users.status, users.password, users.created_at, users.last_login,
-                COUNT(DISTINCT devices.id) as device_count,
-                COUNT(DISTINCT device_sensors.id) as sensor_count,
-                COUNT(DISTINCT device_rules.id) as rule_count,
-                COUNT(DISTINCT sensor_data.id) as log_count
+                (SELECT COUNT(*) FROM devices WHERE devices.user_id = users.id) as device_count,
+                (SELECT COUNT(*) FROM device_sensors WHERE device_sensors.device_code IN (SELECT device_code FROM devices WHERE user_id = users.id)) as sensor_count,
+                (SELECT COUNT(*) FROM device_rules WHERE device_rules.device_code IN (SELECT device_code FROM devices WHERE user_id = users.id)) as rule_count,
+                (SELECT COUNT(*) FROM sensor_data WHERE sensor_data.device_code IN (SELECT device_code FROM devices WHERE user_id = users.id)) as log_count
          FROM users
-         LEFT JOIN devices ON users.id = devices.user_id
-         LEFT JOIN device_sensors ON devices.device_code = device_sensors.device_code
-         LEFT JOIN device_rules ON devices.device_code = device_rules.device_code
-         LEFT JOIN sensor_data ON devices.device_code = sensor_data.device_code
-         GROUP BY users.id
          ORDER BY users.id ASC`,
         [],
         (err, rows) => {
@@ -813,6 +808,12 @@ function saveSensorHistory(device_code, sensor_name, value) {
         }
     );
 
+    // Update last known value in device_sensors table for persistent UI state across refresh & logout
+    db.run(
+        `UPDATE device_sensors SET value=? WHERE device_code=? AND (sensor_name=? OR LOWER(sensor_name)=LOWER(?))`,
+        [valNum, device_code, sensor_name, sensor_name]
+    );
+
     // Evaluate Smart Automation Rules for this sensor reading
     evaluateDeviceRules(device_code, sensor_name, valNum);
 }
@@ -1016,9 +1017,12 @@ app.put("/api/device/:code/sensors/reorder", requireAuth, (req, res) => {
 // ==========================
 // EXPORT TELEMETRY LOGS DATA
 // ==========================
+// ==========================
+// EXPORT TELEMETRY LOGS DATA
+// ==========================
 app.get("/api/device/:code/export-data", (req, res) => {
     const codeParam = req.params.code;
-    const { sensor } = req.query;
+    const { sensor, startDate, endDate } = req.query;
 
     verifyDeviceOwnership(req, res, codeParam, (err, dev) => {
         if (err || !dev) {
@@ -1042,13 +1046,22 @@ app.get("/api/device/:code/export-data", (req, res) => {
             params.push(baseFilter, `%${baseFilter}%`);
         }
 
+        if (startDate && startDate.trim()) {
+            sql += ` AND substr(COALESCE(time, datetime('now','localtime')), 1, 10) >= ?`;
+            params.push(startDate.trim());
+        }
+        if (endDate && endDate.trim()) {
+            sql += ` AND substr(COALESCE(time, datetime('now','localtime')), 1, 10) <= ?`;
+            params.push(endDate.trim());
+        }
+
         sql += ` ORDER BY id ASC`;
 
         db.all(sql, params, (err2, rows) => {
             let logsToReturn = (!err2 && rows && Array.isArray(rows)) ? rows : [];
 
             // If zero logs found with specific baseFilter, fallback to fetching all logs for this device
-            if (logsToReturn.length === 0 && baseFilter) {
+            if (logsToReturn.length === 0 && baseFilter && !startDate && !endDate) {
                 db.all(`SELECT id, device_code, sensor_name, value, COALESCE(time, datetime('now','localtime')) as created_at FROM sensor_data WHERE device_code=? ORDER BY id ASC`, [realCode], (err3, allRows) => {
                     return res.json({
                         success: true,
@@ -1079,7 +1092,7 @@ app.get("/api/device/:code/export-data", (req, res) => {
 // ==========================
 app.get("/api/device/:code/export-info", requireAuth, (req, res) => {
     const codeParam = req.params.code;
-    const { sensor } = req.query;
+    const { sensor, startDate, endDate } = req.query;
 
     verifyDeviceOwnership(req, res, codeParam, (err, dev) => {
         if (err || !dev) return;
@@ -1103,6 +1116,15 @@ app.get("/api/device/:code/export-info", requireAuth, (req, res) => {
         if (baseFilter) {
             sql += ` AND (LOWER(sensor_name) = LOWER(?) OR LOWER(sensor_name) LIKE LOWER(?))`;
             params.push(baseFilter, `%${baseFilter}%`);
+        }
+
+        if (startDate && startDate.trim()) {
+            sql += ` AND substr(COALESCE(time, datetime('now','localtime')), 1, 10) >= ?`;
+            params.push(startDate.trim());
+        }
+        if (endDate && endDate.trim()) {
+            sql += ` AND substr(COALESCE(time, datetime('now','localtime')), 1, 10) <= ?`;
+            params.push(endDate.trim());
         }
 
         db.get(sql, params, (err2, row) => {
@@ -1135,8 +1157,8 @@ app.get("/api/device/:code/export-info", requireAuth, (req, res) => {
 function cleanupOldTelemetryLogs() {
     const cutoff7Days = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     db.run(
-        `DELETE FROM sensor_data WHERE time < ? OR (time IS NULL AND created_at < ?)`,
-        [cutoff7Days, cutoff7Days],
+        `DELETE FROM sensor_data WHERE time < ? OR time IS NULL`,
+        [cutoff7Days],
         function (err) {
             if (err) {
                 console.error("Data retention cleanup error:", err.message);
@@ -1560,7 +1582,7 @@ app.post("/api/control", requireAuth, (req, res) => {
                 if (row && row.mode === "AUTO") {
                     return res.json({
                         success: false,
-                        message: "Relay dalam mode OTOMATIS (Timer). Sakelar manual terkunci. Silahkan ubah ke mode Manual terlebih dahulu."
+                        message: "Relay/Kontrol dalam mode OTOMATIS (Timer). Sakelar manual terkunci. Silahkan ubah ke mode Manual terlebih dahulu."
                     });
                 }
 
@@ -1570,12 +1592,29 @@ app.post("/api/control", requireAuth, (req, res) => {
                         (SELECT id FROM device_controls WHERE device_code=? AND control_name=?),
                         ?, ?, ?, ?
                      )`,
-                    [realCode, control_name, realCode, control_name, status, new Date().toISOString()],
+                    [realCode, control_name, realCode, control_name, String(status), new Date().toISOString()],
                     function (err3) {
                         if (err3) {
                             return res.json({ success: false, message: err3.message });
                         }
-                        res.json({ success: true, status: status });
+
+                        // Update last known value in device_sensors table for persistent UI state
+                        db.run(
+                            `UPDATE device_sensors SET value=? WHERE device_code=? AND (sensor_name=? OR LOWER(sensor_name)=LOWER(?))`,
+                            [String(status), realCode, control_name, control_name]
+                        );
+
+                        // Save history log for numeric Dimmer / PWM status or ON/OFF
+                        let numVal = Number(status);
+                        if (!isNaN(numVal)) {
+                            saveSensorHistory(realCode, control_name, numVal);
+                        } else if (String(status).toUpperCase() === "ON") {
+                            saveSensorHistory(realCode, control_name, 1);
+                        } else if (String(status).toUpperCase() === "OFF") {
+                            saveSensorHistory(realCode, control_name, 0);
+                        }
+
+                        res.json({ success: true, status: String(status) });
                     }
                 );
             }

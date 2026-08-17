@@ -237,7 +237,7 @@ async function openAdminUserModal() {
                 adminModalRefreshInterval = null;
             }
         }
-    }, 3000);
+    }, 6000);
 }
 
 async function loadAdminUserList() {
@@ -866,12 +866,12 @@ if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", () => {
         initCloudTransition();
         checkSystemAnnouncement();
-        setInterval(checkSystemAnnouncement, 3000);
+        setInterval(checkSystemAnnouncement, 15000);
     });
 } else {
     initCloudTransition();
     checkSystemAnnouncement();
-    setInterval(checkSystemAnnouncement, 3000);
+    setInterval(checkSystemAnnouncement, 15000);
 }
 
 // ==========================================

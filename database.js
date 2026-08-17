@@ -8,6 +8,11 @@ const db = new sqlite3.Database("sensor.db", (err) => {
         console.log("Database error:", err);
     } else {
         console.log("Database connected");
+        // Performance Pragmas
+        db.run("PRAGMA journal_mode = WAL;");
+        db.run("PRAGMA synchronous = NORMAL;");
+        db.run("PRAGMA cache_size = -64000;");
+        db.run("PRAGMA temp_store = MEMORY;");
     }
 });
 
@@ -160,6 +165,26 @@ CREATE TABLE IF NOT EXISTS system_announcements (
 )
 `);
 
+// ==========================
+// GLOBAL SYSTEM SETTINGS
+// ==========================
+db.run(`
+CREATE TABLE IF NOT EXISTS system_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT,
+    updated_at TEXT
+)
+`);
+
+// ==========================
+// DATABASE PERFORMANCE INDEXES
+// ==========================
+db.run(`CREATE INDEX IF NOT EXISTS idx_sensor_data_dev_time ON sensor_data(device_code, time DESC)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_sensor_data_name ON sensor_data(sensor_name)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_devices_user_id ON devices(user_id)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_device_sensors_dev ON device_sensors(device_code)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_device_rules_dev ON device_rules(device_code)`);
+db.run(`CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)`);
 
 db.serialize(() => {
     // Seed default admin account
@@ -172,6 +197,27 @@ db.serialize(() => {
 
     // Update existing devices user_id if null
     db.run(`UPDATE devices SET user_id = 1 WHERE user_id IS NULL OR user_id = 0`);
+
+    // Seed default notification settings
+    const defaultSettings = [
+        ['admin_email', 'admin@botek.my.id'],
+        ['admin_wa_number', ''],
+        ['notify_email_enabled', '0'],
+        ['notify_wa_enabled', '0'],
+        ['smtp_host', 'smtp.gmail.com'],
+        ['smtp_port', '465'],
+        ['smtp_user', ''],
+        ['smtp_pass', ''],
+        ['wa_token', ''],
+        ['wa_gateway_url', 'https://api.fonnte.com/send']
+    ];
+
+    const stmt = db.prepare(`INSERT OR IGNORE INTO system_settings (key, value, updated_at) VALUES (?, ?, ?)`);
+    const nowIso = new Date().toISOString();
+    defaultSettings.forEach(([key, val]) => {
+        stmt.run(key, val, nowIso);
+    });
+    stmt.finalize();
 
     console.log("Database structure & Multi-Tenant seeds ready");
 });

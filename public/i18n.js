@@ -77,6 +77,7 @@ const i18nTranslations = {
         sensor_press: "Tekanan (Pressure)",
         sensor_gas: "Kualitas Udara (Gas Quality)",
         sensor_light: "Intensitas Cahaya (Light Intensity)",
+        sensor_dimmer: "Dimmer PWM / Kecepatan Kipas",
         
         // Dynamic Add Device Section
         selected_count: "Terpilih",
@@ -140,6 +141,7 @@ const i18nTranslations = {
         cancel_btn: "Tutup",
         
         // Form Labels
+        login_username_label: "Username / Email",
         username_label: "Nama Pengguna",
         full_name_label: "Nama Lengkap",
         email_label: "Alamat Email",
@@ -152,6 +154,7 @@ const i18nTranslations = {
         device_type_label: "Kategori Perangkat",
         
         // Placeholders
+        ph_login_username: "Masukkan nama pengguna atau email",
         ph_username: "Masukkan nama pengguna",
         ph_full_name: "Masukkan nama lengkap",
         ph_email: "Masukkan alamat email",
@@ -216,6 +219,19 @@ const i18nTranslations = {
         export_title: "Ekspor Data Telemetri & Log Sensor",
         export_format_csv: "Excel / CSV (.csv)",
         export_format_pdf: "Laporan PDF (Siap Cetak)",
+        export_date_range_label: "Rentang Tanggal (Opsional)",
+        export_from_date: "Dari Tanggal:",
+        export_to_date: "Sampai Tanggal:",
+        preset_all: "Semua",
+        preset_today: "Hari Ini",
+        preset_7days: "7 Hari Terakhir",
+        export_retention_notice_title: "Informasi Retensi Data:",
+        export_retention_notice_text: "Data log hanya dapat disimpan maksimal selama <b>7 hari</b>.",
+        export_total_data_label: "Total Data:",
+        export_retention_duration_label: "Durasi Penyimpanan:",
+        export_select_desc: "Pilih sensor atau kontrol sakelar dan format berkas yang ingin diunduh:",
+        export_select_sensor_label: "Pilihan Sensor / Kontrol",
+        export_file_format_label: "Format Berkas Unduhan",
     },
 
     en: {
@@ -292,6 +308,7 @@ const i18nTranslations = {
         sensor_press: "Pressure",
         sensor_gas: "Gas Quality",
         sensor_light: "Light Intensity",
+        sensor_dimmer: "PWM Dimmer / Speed Control",
         
         // Dynamic Add Device Section
         selected_count: "Selected",
@@ -355,6 +372,7 @@ const i18nTranslations = {
         cancel_btn: "Close",
         
         // Form Labels
+        login_username_label: "Username / Email",
         username_label: "Username",
         full_name_label: "Full Name",
         email_label: "Email Address",
@@ -367,6 +385,7 @@ const i18nTranslations = {
         device_type_label: "Device Category",
         
         // Placeholders
+        ph_login_username: "Enter username or email",
         ph_username: "Enter username",
         ph_full_name: "Enter full name",
         ph_email: "Enter email address",
@@ -431,6 +450,19 @@ const i18nTranslations = {
         export_title: "Export Sensor Telemetry & Log Data",
         export_format_csv: "Excel / CSV (.csv)",
         export_format_pdf: "PDF Report (Printable)",
+        export_date_range_label: "Date Range (Optional)",
+        export_from_date: "From Date:",
+        export_to_date: "To Date:",
+        preset_all: "All Time",
+        preset_today: "Today",
+        preset_7days: "Last 7 Days",
+        export_retention_notice_title: "Data Retention Notice:",
+        export_retention_notice_text: "Log data is stored for a maximum of <b>7 days</b>.",
+        export_total_data_label: "Total Data:",
+        export_retention_duration_label: "Storage Duration:",
+        export_select_desc: "Select sensor or switch control and file format to download:",
+        export_select_sensor_label: "Select Sensor / Control",
+        export_file_format_label: "Download File Format",
     }
 };
 

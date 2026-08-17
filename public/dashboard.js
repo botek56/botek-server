@@ -243,7 +243,69 @@ function renderSensors(sensors) {
     let html = "";
 
     sensors.forEach(sensor => {
-        if (sensor.sensor_type === "Relay") {
+        const sTypeClean = String(sensor.sensor_type || '').toLowerCase();
+        const sNameLower = String(sensor.sensor_name || '').toLowerCase();
+        const isDimmerType = sTypeClean === "dimmer" || sNameLower.includes("dimmer") || sNameLower.includes("speed") || sNameLower.includes("pwm");
+
+        if (isDimmerType) {
+            let dimmerVal = parseInt(sensor.value, 10);
+            if (isNaN(dimmerVal)) dimmerVal = 0;
+            dimmerVal = Math.min(100, Math.max(0, dimmerVal));
+
+            html += `
+            <div class="device-card sensor-widget-card" id="dimmer-card-${sensor.id}" data-sensor-id="${sensor.id}" style="display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; background: linear-gradient(145deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.85) 100%); border: 1px solid rgba(56, 189, 248, 0.3); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);">
+                <div>
+                    <div class="device-card-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="drag-handle" title="Tahan & Geser ikon ini untuk mengubah posisi" style="cursor: grab; color: var(--text-muted); padding: 4px 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="12" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="15" cy="19" r="1"></circle></svg>
+                            </div>
+                            <div class="device-icon" style="background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 12px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; font-size: 20px; box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);">🎚️</div>
+                            <div>
+                                <h2 style="margin: 0; font-size: 16px; font-weight: 700; color: #ffffff;">${sensor.sensor_name}</h2>
+                                <span style="display: inline-block; margin-top: 3px; font-size: 10px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase; color: #38bdf8; background: rgba(56, 189, 248, 0.15); padding: 2px 8px; border-radius: 20px; border: 1px solid rgba(56, 189, 248, 0.3);">PWM DIMMER / SPEED</span>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-danger-sm" title="Hapus ${sensor.sensor_name}" style="font-size: 11px; padding: 5px 8px; border-radius: 8px;" onclick="deleteMetric(${sensor.id}, '${sensor.sensor_name}')">🗑️</button>
+                    </div>
+
+                    <!-- LIVE PERCENTAGE & GLOW SLIDER -->
+                    <div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.6) 100%); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px; padding: 18px 16px 16px 16px; text-align: center; margin-bottom: 14px;">
+                        <div style="font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; margin-bottom: 4px;">Tingkat Intensitas (PWM)</div>
+                        <div style="display: flex; align-items: baseline; justify-content: center; gap: 4px; margin-bottom: 14px;">
+                            <span id="dimmer-val-text-${sensor.id}" style="font-size: 40px; font-weight: 800; color: #ffffff; text-shadow: 0 0 20px rgba(56, 189, 248, 0.5);">${dimmerVal}</span>
+                            <span style="font-size: 18px; font-weight: 800; color: #38bdf8;">%</span>
+                        </div>
+
+                        <!-- UNIFIED DYNAMIC SLIDER TRACK -->
+                        <div style="margin-bottom: 16px;">
+                            <input type="range" id="dimmer-slider-${sensor.id}" class="dimmer-range-input" min="0" max="100" value="${dimmerVal}"
+                                style="background: linear-gradient(to right, #38bdf8 0%, #38bdf8 ${dimmerVal}%, rgba(255, 255, 255, 0.12) ${dimmerVal}%, rgba(255, 255, 255, 0.12) 100%);"
+                                oninput="onDimmerSliderInput(${sensor.id}, this.value)"
+                                onchange="onDimmerSliderChange('${sensor.device_code}', '${sensor.sensor_name}', this.value, ${sensor.id})">
+                        </div>
+
+                        <!-- PRESET BUTTONS -->
+                        <div style="display: flex; gap: 4px;">
+                            <button type="button" onclick="setDimmerPreset('${sensor.device_code}', '${sensor.sensor_name}', 0, ${sensor.id})" style="flex: 1; padding: 6px 0; font-size: 10px; font-weight: 700; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.4); background: rgba(239, 68, 68, 0.12); color: #f87171; cursor: pointer;">OFF (0%)</button>
+                            <button type="button" onclick="setDimmerPreset('${sensor.device_code}', '${sensor.sensor_name}', 25, ${sensor.id})" style="flex: 1; padding: 6px 0; font-size: 10px; font-weight: 700; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.3); background: rgba(56, 189, 248, 0.12); color: #38bdf8; cursor: pointer;">25%</button>
+                            <button type="button" onclick="setDimmerPreset('${sensor.device_code}', '${sensor.sensor_name}', 50, ${sensor.id})" style="flex: 1; padding: 6px 0; font-size: 10px; font-weight: 700; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.3); background: rgba(56, 189, 248, 0.12); color: #38bdf8; cursor: pointer;">50%</button>
+                            <button type="button" onclick="setDimmerPreset('${sensor.device_code}', '${sensor.sensor_name}', 75, ${sensor.id})" style="flex: 1; padding: 6px 0; font-size: 10px; font-weight: 700; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.3); background: rgba(56, 189, 248, 0.12); color: #38bdf8; cursor: pointer;">75%</button>
+                            <button type="button" onclick="setDimmerPreset('${sensor.device_code}', '${sensor.sensor_name}', 100, ${sensor.id})" style="flex: 1; padding: 6px 0; font-size: 10px; font-weight: 700; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.12); color: #34d399; cursor: pointer;">MAX (100%)</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11.5px; color: #94a3b8; padding-top: 10px; border-top: 1px solid rgba(255, 255, 255, 0.06);">
+                    <span style="display: flex; align-items: center; gap: 6px;">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20v-6M6 20V10M18 20V4"></path></svg>
+                        PWM Output Control
+                    </span>
+                    <span style="color: #38bdf8; font-weight: 700;">Live 0-100%</span>
+                </div>
+            </div>
+            `;
+        } else if (sensor.sensor_type === "Relay") {
             let isOn = sensor.value == 1;
             let isAuto = String(sensor.mode || '').trim().toUpperCase() === "AUTO";
 
@@ -258,10 +320,10 @@ function renderSensors(sensors) {
             }
 
             html += `
-            <div class="device-card relay-card sensor-widget-card ${isOn ? 'is-on' : ''}" id="relay-card-${sensor.id}" data-sensor-id="${sensor.id}" draggable="true" style="cursor: grab;">
+            <div class="device-card relay-card sensor-widget-card ${isOn ? 'is-on' : ''}" id="relay-card-${sensor.id}" data-sensor-id="${sensor.id}">
                 <div class="device-card-header">
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <div class="drag-handle" title="Tahan & Geser untuk mengubah posisi" style="cursor: grab; color: var(--text-muted); opacity: 0.6; display: inline-flex; align-items: center;">
+                        <div class="drag-handle" title="Tahan & Geser ikon ini untuk mengubah posisi" style="cursor: grab; color: var(--text-muted); padding: 4px 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="12" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="15" cy="19" r="1"></circle></svg>
                         </div>
                         <div class="device-icon">🔘</div>
@@ -364,13 +426,13 @@ function renderSensors(sensors) {
             const barWidth = Math.min(100, Math.max(8, valNum * 10));
 
             html += `
-            <div class="device-card sensor-value-card sensor-widget-card" data-sensor-id="${sensor.id}" draggable="true" style="display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; background: linear-gradient(145deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.85) 100%); border: 1px solid rgba(56, 189, 248, 0.2); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1); cursor: grab;">
+            <div class="device-card sensor-value-card sensor-widget-card" data-sensor-id="${sensor.id}" style="display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden; background: linear-gradient(145deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.85) 100%); border: 1px solid rgba(56, 189, 248, 0.2); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);">
                 <div style="position: absolute; top: -30px; right: -30px; width: 100px; height: 100px; background: radial-gradient(circle, rgba(56, 189, 248, 0.15) 0%, transparent 70%); pointer-events: none;"></div>
 
                 <div>
                     <div class="device-card-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <div class="drag-handle" title="Tahan & Geser untuk mengubah posisi" style="cursor: grab; color: var(--text-muted); opacity: 0.6; display: inline-flex; align-items: center;">
+                            <div class="drag-handle" title="Tahan & Geser ikon ini untuk mengubah posisi" style="cursor: grab; color: var(--text-muted); padding: 4px 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="5" r="1"></circle><circle cx="9" cy="12" r="1"></circle><circle cx="9" cy="19" r="1"></circle><circle cx="15" cy="5" r="1"></circle><circle cx="15" cy="12" r="1"></circle><circle cx="15" cy="19" r="1"></circle></svg>
                             </div>
                             <div class="device-icon" style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 12px; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);">${icon}</div>
@@ -438,22 +500,48 @@ function setupSensorDragAndDrop() {
     let draggedCard = null;
 
     cards.forEach(card => {
-        card.setAttribute("draggable", "true");
+        card.removeAttribute("draggable");
+        card.style.cursor = "default";
+
+        const handle = card.querySelector(".drag-handle");
+        if (handle) {
+            handle.addEventListener("mousedown", () => {
+                card.setAttribute("draggable", "true");
+                handle.style.cursor = "grabbing";
+            });
+            handle.addEventListener("mouseup", () => {
+                card.setAttribute("draggable", "false");
+                handle.style.cursor = "grab";
+            });
+            handle.addEventListener("mouseleave", () => {
+                if (!draggedCard) {
+                    card.setAttribute("draggable", "false");
+                    handle.style.cursor = "grab";
+                }
+            });
+            handle.addEventListener("touchstart", () => {
+                card.setAttribute("draggable", "true");
+            }, { passive: true });
+        }
 
         card.addEventListener("dragstart", (e) => {
+            if (card.getAttribute("draggable") !== "true") {
+                e.preventDefault();
+                return false;
+            }
             draggedCard = card;
             card.style.opacity = "0.45";
             card.style.transform = "scale(0.97)";
-            card.style.cursor = "grabbing";
             e.dataTransfer.effectAllowed = "move";
             e.dataTransfer.setData("text/plain", card.dataset.sensorId);
         });
 
         card.addEventListener("dragend", () => {
+            card.setAttribute("draggable", "false");
+            if (handle) handle.style.cursor = "grab";
             draggedCard = null;
             card.style.opacity = "1";
             card.style.transform = "none";
-            card.style.cursor = "grab";
             
             // Auto save new layout order to server!
             saveSensorsOrder();
@@ -1224,6 +1312,7 @@ function onMetricCategoryChange() {
         case "Power": unitInput.value = "W"; break;
         case "Energy": unitInput.value = "kWh"; break;
         case "Frequency": unitInput.value = "Hz"; break;
+        case "Dimmer": unitInput.value = "%"; break;
         case "Relay": unitInput.value = ""; break;
         default: unitInput.value = ""; break;
     }
@@ -1960,6 +2049,40 @@ function applyAiPresetPrompt(presetText) {
 // ==========================
 // EXPORT TELEMETRY LOGS DATA MODAL & ENGINE
 // ==========================
+function setExportDatePreset(preset) {
+    const startEl = document.getElementById("exportStartDate");
+    const endEl = document.getElementById("exportEndDate");
+    const btnAll = document.getElementById("btnPresetAll");
+    const btnToday = document.getElementById("btnPresetToday");
+    const btn7Days = document.getElementById("btnPreset7Days");
+    if (!startEl || !endEl) return;
+
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+
+    if (preset === 'today') {
+        startEl.value = todayStr;
+        endEl.value = todayStr;
+    } else if (preset === '7days') {
+        const d7 = new Date(now.getTime() - 6 * 24 * 60 * 60 * 1000);
+        startEl.value = d7.toISOString().split('T')[0];
+        endEl.value = todayStr;
+    } else {
+        startEl.value = "";
+        endEl.value = "";
+    }
+
+    // Active button style toggles
+    const activeStyle = "flex: 1; font-size: 11px; padding: 6px 10px; border-radius: 6px; background: #38bdf8; color: #0f172a; border: 1px solid #38bdf8; cursor: pointer; font-weight: 700; transition: all 0.2s ease; box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);";
+    const inactiveStyle = "flex: 1; font-size: 11px; padding: 6px 10px; border-radius: 6px; background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); cursor: pointer; font-weight: 600; transition: all 0.2s ease;";
+
+    if (btnAll) btnAll.style.cssText = (preset === 'all') ? activeStyle : inactiveStyle;
+    if (btnToday) btnToday.style.cssText = (preset === 'today') ? activeStyle : inactiveStyle;
+    if (btn7Days) btn7Days.style.cssText = (preset === '7days') ? activeStyle : inactiveStyle;
+
+    updateExportModalStats();
+}
+
 async function updateExportModalStats() {
     const countEl = document.getElementById("exportStatCount");
     const daysEl = document.getElementById("exportStatDays");
@@ -1969,9 +2092,16 @@ async function updateExportModalStats() {
     if (!curCode) return;
 
     const choice = document.getElementById("exportSensorChoice") ? document.getElementById("exportSensorChoice").value : "all";
+    const startDate = document.getElementById("exportStartDate") ? document.getElementById("exportStartDate").value : "";
+    const endDate = document.getElementById("exportEndDate") ? document.getElementById("exportEndDate").value : "";
 
     try {
-        const res = await fetch(`/api/device/${encodeURIComponent(curCode)}/export-info?sensor=${encodeURIComponent(choice)}&_=${Date.now()}`);
+        let apiUrl = `/api/device/${encodeURIComponent(curCode)}/export-info?sensor=${encodeURIComponent(choice)}`;
+        if (startDate) apiUrl += `&startDate=${encodeURIComponent(startDate)}`;
+        if (endDate) apiUrl += `&endDate=${encodeURIComponent(endDate)}`;
+        apiUrl += `&_=${Date.now()}`;
+
+        const res = await fetch(apiUrl);
         const data = await res.json();
 
         if (data && data.success) {
@@ -2022,61 +2152,84 @@ function openExportTelemetryModal(sensors, defaultTargetName = null) {
     overlay.className = "modal-overlay";
 
     overlay.innerHTML = `
-        <div class="confirm-modal-box" style="max-width: 480px; width: 90%; text-align: left;">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-                <div style="font-weight: 700; font-size: 16px; color: #fff; display: flex; align-items: center; gap: 8px;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    <span>${t("export_title", "Ekspor Data Telemetri & Log Sensor")}</span>
+        <div class="confirm-modal-box" style="max-width: 440px; width: 92%; text-align: left; padding: 18px 20px; border-radius: 14px; background: rgba(15, 23, 42, 0.96); border: 1px solid rgba(255, 255, 255, 0.12); backdrop-filter: blur(16px); box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                <div style="font-weight: 700; font-size: 15px; color: #fff; display: flex; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span data-i18n="export_title">${t("export_title", "Ekspor Data Telemetri & Log Sensor")}</span>
                 </div>
-                <button type="button" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px;" onclick="document.getElementById('exportTelemetryModalOverlay').remove()">✖</button>
+                <button type="button" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-muted); cursor: pointer; font-size: 13px; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onclick="document.getElementById('exportTelemetryModalOverlay').remove()">✖</button>
             </div>
 
-            <!-- RETENTION NOTICE BADGE (NO EMOTES) -->
-            <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.22); border-radius: 8px; padding: 10px 12px; margin-bottom: 14px; font-size: 12px; color: #94a3b8; display: flex; align-items: flex-start; gap: 8px;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            <!-- RETENTION NOTICE BADGE -->
+            <div style="background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; font-size: 11.5px; color: #94a3b8; display: flex; align-items: flex-start; gap: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0; margin-top: 1px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
                 <div>
-                    <strong style="color: #38bdf8;">Informasi Retensi Data:</strong><br>
-                    Data log hanya dapat disimpan maksimal selama <b>7 hari</b>.
+                    <strong style="color: #38bdf8;" data-i18n="export_retention_notice_title">${t("export_retention_notice_title", "Informasi Retensi Data:")}</strong><br>
+                    <span data-i18n="export_retention_notice_text">${t("export_retention_notice_text", "Data log hanya dapat disimpan maksimal selama <b>7 hari</b>.")}</span>
                 </div>
             </div>
 
-            <!-- DYNAMIC STATS CONTAINER (NO EMOTES) -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; background: rgba(15, 23, 42, 0.6); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color);">
-                <div style="font-size: 12px; color: var(--text-muted);">
-                    Total Data: <b id="exportStatCount" style="color: #38bdf8; font-size: 13px; margin-left: 4px;">Memuat...</b>
+            <!-- DYNAMIC STATS CONTAINER -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; background: rgba(15, 23, 42, 0.6); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <div style="font-size: 11.5px; color: var(--text-muted);">
+                    <span data-i18n="export_total_data_label">${t("export_total_data_label", "Total Data:")}</span> <b id="exportStatCount" style="color: #38bdf8; font-size: 12.5px; margin-left: 4px; font-weight: 700;">Memuat...</b>
                 </div>
-                <div style="font-size: 12px; color: var(--text-muted);">
-                    Durasi Penyimpanan: <b id="exportStatDays" style="color: #34d399; font-size: 13px; margin-left: 4px;">Memuat...</b>
+                <div style="font-size: 11.5px; color: var(--text-muted);">
+                    <span data-i18n="export_retention_duration_label">${t("export_retention_duration_label", "Durasi Penyimpanan:")}</span> <b id="exportStatDays" style="color: #34d399; font-size: 12.5px; margin-left: 4px; font-weight: 700;">Memuat...</b>
                 </div>
             </div>
             
-            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.5;">
-                Pilih sensor atau kontrol sakelar dan format berkas yang ingin diunduh:
+            <div style="font-size: 11.5px; color: var(--text-muted); margin-bottom: 10px; line-height: 1.4;" data-i18n="export_select_desc">
+                ${t("export_select_desc", "Pilih sensor atau kontrol sakelar dan format berkas yang ingin diunduh:")}
             </div>
 
-            <div style="margin-bottom: 18px;">
-                <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">Pilihan Sensor / Kontrol</label>
-                <select id="exportSensorChoice" style="width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color); background: #0f172a; color: #fff; font-size: 13px; outline: none; cursor: pointer;" onchange="updateExportModalStats()">
+            <div style="margin-bottom: 10px;">
+                <label style="display: block; font-size: 11.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px;" data-i18n="export_select_sensor_label">${t("export_select_sensor_label", "Pilihan Sensor / Kontrol")}</label>
+                <select id="exportSensorChoice" style="width: 100%; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border-color); background: #0f172a; color: #fff; font-size: 12px; outline: none; cursor: pointer;" onchange="updateExportModalStats()">
                     ${sensorOptionsHtml}
                 </select>
             </div>
 
-            <div style="margin-bottom: 20px;">
-                <label style="display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;">Format Berkas Unduhan</label>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <button type="button" id="btnExportCsv" onclick="downloadTelemetryCsv()" style="padding: 14px; border-radius: 10px; border: 1px solid rgba(56, 189, 248, 0.35); background: rgba(56, 189, 248, 0.12); color: #38bdf8; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            <!-- DATE RANGE FILTER INPUTS -->
+            <div style="margin-bottom: 14px; background: rgba(15, 23, 42, 0.6); padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color);">
+                <div style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; color: #f8fafc; margin-bottom: 8px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <span data-i18n="export_date_range_label">${t("export_date_range_label", "Rentang Tanggal (Opsional)")}</span>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                    <div>
+                        <span style="font-size: 10.5px; color: #94a3b8; display: block; margin-bottom: 3px;" data-i18n="export_from_date">${t("export_from_date", "Dari Tanggal:")}</span>
+                        <input type="date" id="exportStartDate" onchange="updateExportModalStats()" style="width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border-color); background: #0f172a; color: #f8fafc; font-size: 11.5px; outline: none; color-scheme: dark; font-family: 'Plus Jakarta Sans', sans-serif;">
+                    </div>
+                    <div>
+                        <span style="font-size: 10.5px; color: #94a3b8; display: block; margin-bottom: 3px;" data-i18n="export_to_date">${t("export_to_date", "Sampai Tanggal:")}</span>
+                        <input type="date" id="exportEndDate" onchange="updateExportModalStats()" style="width: 100%; padding: 6px 8px; border-radius: 6px; border: 1px solid var(--border-color); background: #0f172a; color: #f8fafc; font-size: 11.5px; outline: none; color-scheme: dark; font-family: 'Plus Jakarta Sans', sans-serif;">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                    <button type="button" id="btnPresetAll" onclick="setExportDatePreset('all')" style="flex: 1; font-size: 10.5px; padding: 4px 8px; border-radius: 5px; background: #38bdf8; color: #0f172a; border: 1px solid #38bdf8; cursor: pointer; font-weight: 700; transition: all 0.2s ease; box-shadow: 0 0 10px rgba(56, 189, 248, 0.35);" data-i18n="preset_all">${t("preset_all", "Semua")}</button>
+                    <button type="button" id="btnPresetToday" onclick="setExportDatePreset('today')" style="flex: 1; font-size: 10.5px; padding: 4px 8px; border-radius: 5px; background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); cursor: pointer; font-weight: 600; transition: all 0.2s ease;" data-i18n="preset_today">${t("preset_today", "Hari Ini")}</button>
+                    <button type="button" id="btnPreset7Days" onclick="setExportDatePreset('7days')" style="flex: 1; font-size: 10.5px; padding: 4px 8px; border-radius: 5px; background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); cursor: pointer; font-weight: 600; transition: all 0.2s ease;" data-i18n="preset_7days">${t("preset_7days", "7 Hari Terakhir")}</button>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 11.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;" data-i18n="export_file_format_label">${t("export_file_format_label", "Format Berkas Unduhan")}</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button type="button" id="btnExportCsv" onclick="downloadTelemetryCsv()" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.35); background: rgba(56, 189, 248, 0.12); color: #38bdf8; font-weight: 700; font-size: 11.5px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
                         <span>${t("export_format_csv", "Excel / CSV (.csv)")}</span>
                     </button>
-                    <button type="button" id="btnExportPdf" onclick="downloadTelemetryPdfReport()" style="padding: 14px; border-radius: 10px; border: 1px solid rgba(168, 85, 247, 0.35); background: rgba(168, 85, 247, 0.12); color: #c084fc; font-weight: 700; font-size: 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px;">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                    <button type="button" id="btnExportPdf" onclick="downloadTelemetryPdfReport()" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(168, 85, 247, 0.35); background: rgba(168, 85, 247, 0.12); color: #c084fc; font-weight: 700; font-size: 11.5px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
                         <span>${t("export_format_pdf", "Laporan PDF (Siap Cetak)")}</span>
                     </button>
                 </div>
             </div>
 
             <div style="display: flex; justify-content: flex-end;">
-                <button type="button" class="btn-secondary" onclick="document.getElementById('exportTelemetryModalOverlay').remove()" style="padding: 8px 16px;">${t("cancel_btn", "Tutup")}</button>
+                <button type="button" class="btn-secondary" onclick="document.getElementById('exportTelemetryModalOverlay').remove()" style="padding: 6px 14px; font-size: 11.5px;">${t("cancel_btn", "Tutup")}</button>
             </div>
         </div>
     `;
@@ -2109,9 +2262,16 @@ async function downloadTelemetryCsv() {
         return;
     }
     const sensorChoice = document.getElementById("exportSensorChoice") ? document.getElementById("exportSensorChoice").value : "all";
+    const startDate = document.getElementById("exportStartDate") ? document.getElementById("exportStartDate").value : "";
+    const endDate = document.getElementById("exportEndDate") ? document.getElementById("exportEndDate").value : "";
 
     try {
-        const response = await fetch(`/api/device/${encodeURIComponent(curCode)}/export-data?sensor=${encodeURIComponent(sensorChoice)}&limit=10000&_=${Date.now()}`);
+        let apiUrl = `/api/device/${encodeURIComponent(curCode)}/export-data?sensor=${encodeURIComponent(sensorChoice)}&limit=10000`;
+        if (startDate) apiUrl += `&startDate=${encodeURIComponent(startDate)}`;
+        if (endDate) apiUrl += `&endDate=${encodeURIComponent(endDate)}`;
+        apiUrl += `&_=${Date.now()}`;
+
+        const response = await fetch(apiUrl);
         const data = await response.json();
 
         if (!data || !data.success) {
@@ -2245,9 +2405,16 @@ async function downloadTelemetryPdfReport() {
         return;
     }
     const sensorChoice = document.getElementById("exportSensorChoice") ? document.getElementById("exportSensorChoice").value : "all";
+    const startDate = document.getElementById("exportStartDate") ? document.getElementById("exportStartDate").value : "";
+    const endDate = document.getElementById("exportEndDate") ? document.getElementById("exportEndDate").value : "";
 
     try {
-        const response = await fetch(`/api/device/${encodeURIComponent(curCode)}/export-data?sensor=${encodeURIComponent(sensorChoice)}&limit=10000&_=${Date.now()}`);
+        let apiUrl = `/api/device/${encodeURIComponent(curCode)}/export-data?sensor=${encodeURIComponent(sensorChoice)}&limit=10000`;
+        if (startDate) apiUrl += `&startDate=${encodeURIComponent(startDate)}`;
+        if (endDate) apiUrl += `&endDate=${encodeURIComponent(endDate)}`;
+        apiUrl += `&_=${Date.now()}`;
+
+        const response = await fetch(apiUrl);
         const data = await response.json();
 
         let logsToExport = (data && Array.isArray(data.logs)) ? data.logs : [];
@@ -2410,4 +2577,46 @@ void processCustomPromptLogic() {
 
     textArea.value = enhancementHeader + customFunctions + baseCode;
     showToast(`Skrip C++ ESP32 berhasil diperbarui dengan fitur: "${userPrompt}"!`, "success");
+}
+
+// ==========================
+// PWM DIMMER CONTROLLER HELPERS
+// ==========================
+function onDimmerSliderInput(sensorId, val) {
+    const textEl = document.getElementById(`dimmer-val-text-${sensorId}`);
+    const sliderEl = document.getElementById(`dimmer-slider-${sensorId}`);
+    if (textEl) textEl.innerText = val;
+    if (sliderEl) {
+        sliderEl.style.background = `linear-gradient(to right, #38bdf8 0%, #38bdf8 ${val}%, rgba(255, 255, 255, 0.12) ${val}%, rgba(255, 255, 255, 0.12) 100%)`;
+    }
+}
+
+async function onDimmerSliderChange(deviceCode, controlName, val, sensorId) {
+    onDimmerSliderInput(sensorId, val);
+    try {
+        const response = await fetch("/api/control", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                device_code: deviceCode,
+                control_name: controlName,
+                status: String(val)
+            })
+        });
+        const data = await response.json();
+        if (data && data.success) {
+            showToast(`${controlName} diset ke ${val}%`, "success");
+        } else {
+            showToast((data && data.message) || "Gagal mengubah nilai dimmer.", "error");
+        }
+    } catch (err) {
+        console.error("Dimmer control error:", err);
+        showToast("Kesalahan koneksi ke server.", "error");
+    }
+}
+
+function setDimmerPreset(deviceCode, controlName, val, sensorId) {
+    const sliderEl = document.getElementById(`dimmer-slider-${sensorId}`);
+    if (sliderEl) sliderEl.value = val;
+    onDimmerSliderChange(deviceCode, controlName, val, sensorId);
 }

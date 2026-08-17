@@ -32,7 +32,7 @@ if (chartCanvas && typeof Chart !== "undefined") {
         }
     });
 
-    setInterval(updateSensor, 2000);
+    setInterval(updateSensor, 4000);
 }
 
 async function updateSensor() {
