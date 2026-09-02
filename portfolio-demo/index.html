@@ -1,0 +1,130 @@
+﻿<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TechNova Solutions - Jasa Pembuatan Website Profesional</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#05080F;--bg2:#0D1117;--card:#0F1923;--border:rgba(255,255,255,0.07);--blue:#3B82F6;--purple:#8B5CF6;--green:#10B981;--text:#F1F5F9;--muted:#64748B;--gradient:linear-gradient(135deg,#3B82F6,#8B5CF6)}
+    html{scroll-behavior:smooth}body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow-x:hidden}
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:1rem 5%;background:rgba(5,8,15,0.85);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);transition:background .3s}
+    .logo{font-size:1.4rem;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .nav-links{display:flex;gap:2rem;list-style:none}.nav-links a{color:var(--muted);text-decoration:none;font-size:.9rem;font-weight:500;transition:color .3s}.nav-links a:hover{color:var(--text)}
+    .nav-cta{padding:.55rem 1.4rem;border-radius:8px;background:var(--gradient);color:#fff;font-weight:600;font-size:.85rem;text-decoration:none;box-shadow:0 4px 20px rgba(59,130,246,.3)}
+    .hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:6rem 5% 4rem;position:relative;overflow:hidden}
+    .glow{position:absolute;width:700px;height:700px;background:radial-gradient(circle,rgba(59,130,246,.15) 0%,transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+    .badge{display:inline-flex;align-items:center;gap:.5rem;padding:.4rem 1rem;border-radius:99px;border:1px solid rgba(59,130,246,.3);background:rgba(59,130,246,.08);font-size:.8rem;color:var(--blue);font-weight:500;margin-bottom:1.5rem}
+    h1{font-size:clamp(2.5rem,6vw,5rem);font-weight:900;line-height:1.1;margin-bottom:1.5rem}
+    h1 span{background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    .hero p{max-width:600px;color:var(--muted);font-size:1.1rem;line-height:1.8;margin-bottom:2.5rem}
+    .btns{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center}
+    .btn-p{padding:.85rem 2rem;border-radius:10px;background:var(--gradient);color:#fff;font-weight:700;font-size:1rem;text-decoration:none;box-shadow:0 8px 30px rgba(59,130,246,.35);transition:transform .2s}
+    .btn-p:hover{transform:translateY(-2px)}.btn-o{padding:.85rem 2rem;border-radius:10px;border:1px solid var(--border);color:var(--text);font-weight:600;font-size:1rem;text-decoration:none;transition:border-color .2s}.btn-o:hover{border-color:var(--blue)}
+    .stats{display:flex;gap:3rem;margin-top:4rem}.stat{text-align:center}.sn{font-size:2rem;font-weight:800;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent}.sl{font-size:.8rem;color:var(--muted);margin-top:.2rem}
+    .sec{padding:6rem 5%}.alt{background:var(--bg2)}
+    .stag{text-align:center;margin-bottom:1rem;font-size:.8rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--blue)}
+    h2{text-align:center;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;margin-bottom:1rem}
+    .sub{text-align:center;color:var(--muted);max-width:500px;margin:0 auto 3.5rem;line-height:1.7}
+    .g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem}
+    .c{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:2rem;transition:transform .3s,border-color .3s,box-shadow .3s}
+    .c:hover{transform:translateY(-6px);border-color:rgba(59,130,246,.3);box-shadow:0 20px 60px rgba(59,130,246,.1)}
+    .ci{width:52px;height:52px;border-radius:12px;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin-bottom:1.2rem}
+    .c h3{font-size:1.1rem;font-weight:700;margin-bottom:.7rem}.c p{color:var(--muted);font-size:.9rem;line-height:1.7}
+    .pc{border-radius:16px;overflow:hidden;border:1px solid var(--border);transition:transform .3s,box-shadow .3s}.pc:hover{transform:translateY(-6px);box-shadow:0 20px 60px rgba(0,0,0,.4)}
+    .pi{height:200px;display:flex;align-items:center;justify-content:center;font-size:3rem}
+    .pi1{background:linear-gradient(135deg,#1e3a5f,#3B82F6)}.pi2{background:linear-gradient(135deg,#1a1040,#8B5CF6)}.pi3{background:linear-gradient(135deg,#0d2b1a,#10B981)}
+    .pinfo{padding:1.5rem;background:var(--card)}.pinfo h3{font-weight:700;margin-bottom:.4rem}.pinfo p{color:var(--muted);font-size:.85rem}
+    .tags{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem}
+    .tag{padding:.25rem .7rem;border-radius:99px;font-size:.75rem;font-weight:500;background:rgba(59,130,246,.1);color:var(--blue);border:1px solid rgba(59,130,246,.2)}
+    .pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.5rem;max-width:900px;margin:0 auto}
+    .pcard{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2rem;text-align:center;position:relative;transition:transform .3s}
+    .pcard.hot{border-color:var(--blue);background:linear-gradient(135deg,rgba(59,130,246,.06),rgba(139,92,246,.06));transform:scale(1.03)}
+    .hbadge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--gradient);color:#fff;padding:.3rem 1rem;border-radius:99px;font-size:.75rem;font-weight:700}
+    .pn{font-size:.85rem;color:var(--muted);margin-bottom:.5rem}.pp{font-size:2.2rem;font-weight:900;margin-bottom:1.5rem}.pp span{font-size:.9rem;color:var(--muted)}
+    .pl{list-style:none;margin-bottom:2rem;text-align:left}.pl li{padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.9rem;color:var(--muted);display:flex;gap:.6rem}.pl li::before{content:'checkmark';color:var(--green);font-weight:700}
+    .pb{display:block;width:100%;padding:.85rem;border-radius:10px;font-weight:700;text-decoration:none;transition:all .2s}
+    .pbf{background:var(--gradient);color:#fff;box-shadow:0 8px 24px rgba(59,130,246,.3)}.pbl{border:1px solid var(--border);color:var(--text)}.pbl:hover{border-color:var(--blue)}
+    .tc{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.8rem}
+    .stars{color:#F59E0B;margin-bottom:1rem}.ttext{color:var(--muted);font-size:.9rem;line-height:1.8;margin-bottom:1.2rem;font-style:italic}
+    .ta{display:flex;align-items:center;gap:.8rem}.av{width:40px;height:40px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-weight:700}
+    .an{font-weight:600;font-size:.9rem}.ar{font-size:.75rem;color:var(--muted)}
+    .cta{text-align:center;padding:6rem 5%;background:linear-gradient(135deg,rgba(59,130,246,.08),rgba(139,92,246,.08));border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+    .cta h2{font-size:clamp(1.8rem,4vw,3rem);margin-bottom:1rem}.cta p{color:var(--muted);margin-bottom:2.5rem}
+    .cbtns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap}
+    footer{text-align:center;padding:2rem 5%;color:var(--muted);font-size:.85rem;border-top:1px solid var(--border)}
+    .particles{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden}
+    .particle{position:absolute;width:2px;height:2px;background:rgba(59,130,246,.4);border-radius:50%;animation:float linear infinite}
+    @keyframes float{0%{transform:translateY(100vh);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateY(-10vh);opacity:0}}
+    @media(max-width:600px){.nav-links{display:none}.stats{gap:1.5rem}.pcard.hot{transform:none}}
+  </style>
+</head>
+<body>
+<div class="particles" id="pt"></div>
+<nav id="nav">
+  <div class="logo">TechNova</div>
+  <ul class="nav-links"><li><a href="#layanan">Layanan</a></li><li><a href="#portfolio">Portfolio</a></li><li><a href="#harga">Harga</a></li><li><a href="#kontak">Kontak</a></li></ul>
+  <a href="#kontak" class="nav-cta">Hubungi Kami</a>
+</nav>
+<section class="hero">
+  <div class="glow"></div>
+  <div class="badge">✦ Solusi Digital Terpercaya</div>
+  <h1>Website <span>Profesional</span><br>Untuk Bisnis Anda</h1>
+  <p>Kami merancang dan membangun website modern yang membantu bisnis Anda tumbuh, menjangkau lebih banyak pelanggan, dan tampil profesional di era digital.</p>
+  <div class="btns"><a href="#harga" class="btn-p">🚀 Mulai Sekarang</a><a href="#portfolio" class="btn-o">Lihat Portfolio</a></div>
+  <div class="stats"><div class="stat"><div class="sn">50+</div><div class="sl">Project Selesai</div></div><div class="stat"><div class="sn">98%</div><div class="sl">Klien Puas</div></div><div class="stat"><div class="sn">3 hr</div><div class="sl">Respon Cepat</div></div></div>
+</section>
+<section class="sec" id="layanan">
+  <div class="stag">Layanan Kami</div><h2>Apa yang Kami Buat?</h2><p class="sub">Solusi web lengkap dari desain hingga deployment, siap pakai untuk bisnis Anda.</p>
+  <div class="g3">
+    <div class="c"><div class="ci">🚀</div><h3>Landing Page</h3><p>Halaman promosi yang menarik, dioptimalkan untuk konversi dan tampil memukau di semua perangkat.</p></div>
+    <div class="c"><div class="ci">🏢</div><h3>Company Profile</h3><p>Website profil perusahaan yang elegan, membangun kepercayaan dan citra profesional bisnis Anda.</p></div>
+    <div class="c"><div class="ci">🛒</div><h3>Toko Online</h3><p>E-commerce lengkap dengan manajemen produk, keranjang belanja, dan integrasi pembayaran.</p></div>
+    <div class="c"><div class="ci">📊</div><h3>Web App & Dashboard</h3><p>Aplikasi web custom dengan backend Node.js, database, dan dashboard analitik real-time.</p></div>
+    <div class="c"><div class="ci">📱</div><h3>PWA Mobile</h3><p>Website yang bisa diinstall seperti aplikasi, bekerja offline dan pengalaman native.</p></div>
+    <div class="c"><div class="ci">⚡</div><h3>Optimasi & SEO</h3><p>Tingkatkan kecepatan loading dan peringkat Google agar bisnis mudah ditemukan pelanggan.</p></div>
+  </div>
+</section>
+<section class="sec alt" id="portfolio">
+  <div class="stag">Portofolio</div><h2>Hasil Kerja Kami</h2><p class="sub">Beberapa project yang telah kami selesaikan.</p>
+  <div class="g3">
+    <div class="pc"><div class="pi pi1">🌐</div><div class="pinfo"><h3>Dashboard IoT</h3><p>Monitoring real-time perangkat IoT dengan grafik dan alert otomatis.</p><div class="tags"><span class="tag">Node.js</span><span class="tag">WebSocket</span><span class="tag">Chart.js</span></div></div></div>
+    <div class="pc"><div class="pi pi2">🛍️</div><div class="pinfo"><h3>Toko Online Fashion</h3><p>E-commerce lengkap dengan manajemen stok dan payment gateway.</p><div class="tags"><span class="tag">HTML/CSS</span><span class="tag">JavaScript</span><span class="tag">MySQL</span></div></div></div>
+    <div class="pc"><div class="pi pi3">🏥</div><div class="pinfo"><h3>Sistem Klinik</h3><p>Manajemen pasien, jadwal dokter, dan rekam medis digital.</p><div class="tags"><span class="tag">Node.js</span><span class="tag">SQLite</span><span class="tag">PWA</span></div></div></div>
+  </div>
+</section>
+<section class="sec" id="harga">
+  <div class="stag">Harga</div><h2>Paket yang Terjangkau</h2><p class="sub">Pilih paket sesuai kebutuhan. Semua termasuk revisi gratis!</p>
+  <div class="pgrid">
+    <div class="pcard"><div class="pn">BASIC</div><div class="pp">Rp 150rb <span>/ project</span></div><ul class="pl"><li>Landing Page 1 Halaman</li><li>Desain Responsif</li><li>Form Kontak</li><li>2x Revisi</li><li>Pengerjaan 2 Hari</li></ul><a href="#kontak" class="pb pbl">Pesan Sekarang</a></div>
+    <div class="pcard hot"><div class="hbadge">⭐ Terpopuler</div><div class="pn">STANDARD</div><div class="pp">Rp 500rb <span>/ project</span></div><ul class="pl"><li>Company Profile 5 Hal.</li><li>Desain Modern + Animasi</li><li>Form + WhatsApp</li><li>SEO Dasar</li><li>Revisi Hingga Puas</li><li>Pengerjaan 5 Hari</li></ul><a href="#kontak" class="pb pbf">Pesan Sekarang</a></div>
+    <div class="pcard"><div class="pn">PREMIUM</div><div class="pp">Rp 1,5jt <span>/ project</span></div><ul class="pl"><li>Web App Full Stack</li><li>Backend + Database</li><li>Admin Dashboard</li><li>Login & Auth</li><li>Deploy ke Server</li><li>Support 30 Hari</li></ul><a href="#kontak" class="pb pbl">Pesan Sekarang</a></div>
+  </div>
+</section>
+<section class="sec alt">
+  <div class="stag">Testimoni</div><h2>Kata Klien Kami</h2><p class="sub">Kepuasan klien adalah prioritas utama kami.</p>
+  <div class="g3">
+    <div class="tc"><div class="stars">★★★★★</div><p class="ttext">"Hasilnya melebihi ekspektasi! Website klinik kami jadi sangat profesional. Pengerjaan cepat dan komunikasi lancar."</p><div class="ta"><div class="av">DR</div><div><div class="an">Dr. Riana</div><div class="ar">Pemilik Klinik Sehat</div></div></div></div>
+    <div class="tc"><div class="stars">★★★★★</div><p class="ttext">"Toko online saya langsung ramai! Tampilannya keren dan mudah dikelola. Sangat recommended!"</p><div class="ta"><div class="av">BS</div><div><div class="an">Budi Santoso</div><div class="ar">Owner Butik Mode</div></div></div></div>
+    <div class="tc"><div class="stars">★★★★★</div><p class="ttext">"Dashboard IoT untuk pabrik berjalan sempurna. Real-time, akurat, dan tampilannya sangat profesional!"</p><div class="ta"><div class="av">AW</div><div><div class="an">Agus Wijaya</div><div class="ar">Manager PT. Teknindo</div></div></div></div>
+  </div>
+</section>
+<section class="cta" id="kontak">
+  <h2>Siap Punya Website <span style="background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Impian</span>?</h2>
+  <p>Hubungi kami sekarang dan dapatkan konsultasi GRATIS!</p>
+  <div class="cbtns">
+    <a href="https://wa.me/6281234567890" class="btn-p" style="text-decoration:none;padding:.9rem 2.5rem;border-radius:10px">💬 Chat WhatsApp</a>
+    <a href="https://fastwork.id" class="btn-o" style="text-decoration:none;padding:.9rem 2.5rem;border-radius:10px">⚡ Order di Fastwork</a>
+  </div>
+</section>
+<footer><p>© 2026 TechNova Solutions · Jasa Pembuatan Website Profesional · Indonesia</p></footer>
+<script>
+const pt=document.getElementById('pt');
+for(let i=0;i<25;i++){const p=document.createElement('div');p.className='particle';p.style.cssText=left:%;animation-duration:s;animation-delay:s;;pt.appendChild(p);}
+window.addEventListener('scroll',()=>{document.getElementById('nav').style.background=window.scrollY>50?'rgba(5,8,15,.97)':'rgba(5,8,15,.85)';});
+const obs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting){x.target.style.opacity='1';x.target.style.transform=x.target.classList.contains('hot')?'scale(1.03)':'translateY(0)';}});},{threshold:.1});
+document.querySelectorAll('.c,.pc,.pcard,.tc').forEach(el=>{el.style.cssText+='opacity:0;transform:translateY(30px);transition:opacity .6s,transform .6s;';obs.observe(el);});
+</script>
+</body>
+</html>

@@ -1,5 +1,10 @@
 const db = require("./database");
-const bcrypt = require("bcrypt");
+let bcrypt;
+try {
+    bcrypt = require("bcrypt");
+} catch (e) {
+    bcrypt = require("bcryptjs");
+}
 
 async function createAdmin() {
     try {

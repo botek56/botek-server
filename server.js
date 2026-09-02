@@ -1,6 +1,11 @@
 const express = require("express");
 const session = require("express-session");
-const bcrypt = require("bcrypt");
+let bcrypt;
+try {
+    bcrypt = require("bcrypt");
+} catch (e) {
+    bcrypt = require("bcryptjs");
+}
 
 const db = require("./database");
 require("./user");
@@ -9,13 +14,14 @@ const getSensorData = require("./sensor");
 const net = require("net");
 const http = require("http");
 const WebSocket = require("ws");
-const { Aedes } = require("aedes");
+const aedesPackage = require("aedes");
+const createAedes = aedesPackage.Aedes || aedesPackage.createBroker || aedesPackage;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Initialize Embedded Aedes MQTT Broker
-const aedes = new Aedes();
+const aedes = (typeof createAedes === 'function' && !createAedes.prototype) ? createAedes() : new createAedes();
 
 // 1. MQTT TCP Broker for ESP32/ESP8266 Hardware (Port 1883)
 const mqttPort = process.env.MQTT_PORT || 1883;
@@ -162,6 +168,7 @@ aedes.on("publish", (packet, client) => {
              )`,
             [deviceCode, controlName, deviceCode, controlName, status, new Date().toISOString()]
         );
+        saveSensorHistory(deviceCode, controlName, numericVal);
         broadcastDeviceUpdate(deviceCode);
     }
 
@@ -1032,18 +1039,13 @@ app.get("/api/device/:code/export-data", (req, res) => {
         const realCode = dev.device_code;
         let sensorFilter = (sensor && sensor !== "all" && sensor !== "Semua Sensor & Sakelar") ? sensor.trim() : null;
 
-        // Extract base name (e.g. "Voltage (Custom)" -> "Voltage") to match sensor_data entries
-        let baseFilter = sensorFilter ? sensorFilter.split('(')[0].trim() : null;
-        if (baseFilter && (baseFilter.toLowerCase() === 'all' || baseFilter.toLowerCase() === 'semua sensor & sakelar')) {
-            baseFilter = null;
-        }
-
         let sql = `SELECT id, device_code, sensor_name, value, COALESCE(time, datetime('now','localtime')) as created_at FROM sensor_data WHERE device_code=?`;
         let params = [realCode];
 
-        if (baseFilter) {
-            sql += ` AND (LOWER(sensor_name) = LOWER(?) OR LOWER(sensor_name) LIKE LOWER(?))`;
-            params.push(baseFilter, `%${baseFilter}%`);
+        if (sensorFilter) {
+            let cleanBase = sensorFilter.split('(')[0].trim();
+            sql += ` AND (LOWER(sensor_name) = LOWER(?) OR LOWER(sensor_name) = LOWER(?) OR LOWER(sensor_name) LIKE LOWER(?))`;
+            params.push(sensorFilter, cleanBase, `%${cleanBase}%`);
         }
 
         if (startDate && startDate.trim()) {
@@ -1059,21 +1061,6 @@ app.get("/api/device/:code/export-data", (req, res) => {
 
         db.all(sql, params, (err2, rows) => {
             let logsToReturn = (!err2 && rows && Array.isArray(rows)) ? rows : [];
-
-            // If zero logs found with specific baseFilter, fallback to fetching all logs for this device
-            if (logsToReturn.length === 0 && baseFilter && !startDate && !endDate) {
-                db.all(`SELECT id, device_code, sensor_name, value, COALESCE(time, datetime('now','localtime')) as created_at FROM sensor_data WHERE device_code=? ORDER BY id ASC`, [realCode], (err3, allRows) => {
-                    return res.json({
-                        success: true,
-                        device_name: dev.device_name,
-                        device_code: dev.device_code,
-                        device_type: dev.type,
-                        location: dev.location,
-                        logs: (allRows && Array.isArray(allRows)) ? allRows : []
-                    });
-                });
-                return;
-            }
 
             res.json({
                 success: true,
@@ -1099,10 +1086,6 @@ app.get("/api/device/:code/export-info", requireAuth, (req, res) => {
 
         const realCode = dev.device_code;
         let sensorFilter = (sensor && sensor !== "all" && sensor !== "Semua Sensor & Sakelar") ? sensor.trim() : null;
-        let baseFilter = sensorFilter ? sensorFilter.split('(')[0].trim() : null;
-        if (baseFilter && (baseFilter.toLowerCase() === 'all' || baseFilter.toLowerCase() === 'semua sensor & sakelar')) {
-            baseFilter = null;
-        }
 
         let sql = `
             SELECT 
@@ -1113,9 +1096,10 @@ app.get("/api/device/:code/export-info", requireAuth, (req, res) => {
         `;
         let params = [realCode];
 
-        if (baseFilter) {
-            sql += ` AND (LOWER(sensor_name) = LOWER(?) OR LOWER(sensor_name) LIKE LOWER(?))`;
-            params.push(baseFilter, `%${baseFilter}%`);
+        if (sensorFilter) {
+            let cleanBase = sensorFilter.split('(')[0].trim();
+            sql += ` AND (LOWER(sensor_name) = LOWER(?) OR LOWER(sensor_name) = LOWER(?) OR LOWER(sensor_name) LIKE LOWER(?))`;
+            params.push(sensorFilter, cleanBase, `%${cleanBase}%`);
         }
 
         if (startDate && startDate.trim()) {
@@ -1347,6 +1331,7 @@ app.post("/api/device/:code/sensor", requireAuth, (req, res) => {
                                 if (err4) {
                                     return res.json({ success: false, message: err4.message });
                                 }
+                                saveSensorHistory(code, sensor_name, numericVal);
                                 // Broadcast via MQTT & SSE
                                 publishMqtt("botek/" + code + "/relay/" + sensor_name, status);
                                 broadcastDeviceUpdate(code);
@@ -1613,6 +1598,10 @@ app.post("/api/control", requireAuth, (req, res) => {
                         } else if (String(status).toUpperCase() === "OFF") {
                             saveSensorHistory(realCode, control_name, 0);
                         }
+
+                        // Broadcast control action to ESP32 hardware via MQTT & WebSocket, and update web UI
+                        publishMqtt("botek/" + realCode + "/relay/" + control_name, String(status));
+                        broadcastDeviceUpdate(realCode);
 
                         res.json({ success: true, status: String(status) });
                     }

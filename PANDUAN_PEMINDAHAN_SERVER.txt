@@ -1,0 +1,163 @@
+================================================================================
+          PANDUAN LENGKAP & TERPERINCI PEMINDAHAN SERVER BOTEK IOT
+================================================================================
+Dokumen ini berisi panduan terperinci mengenai langkah-langkah, alasan teknis,
+serta perintah terminal yang harus dijalankan saat memindahkan server BOTEK IoT 
+ke laptop baru.
+
+--------------------------------------------------------------------------------
+BAGIAN 1: APLIKASI YANG HARUS DI-INSTALL DI LAPTOP BARU
+--------------------------------------------------------------------------------
+
+1. Node.js LTS (Versi v18 atau v20)
+   - Fungsi : Runtime mesin untuk menjalankan server JavaScript (server.js).
+   - Link   : https://nodejs.org
+   - Detail : Pilih versi LTS (Long Term Support) karena sangat stabil dan 
+              kompatibel dengan semua pustaka database (sqlite3) & enkripsi (bcrypt).
+   - Cara   : Download file installer (.msi), buka dan klik "Next" sampai "Finish".
+
+2. Git for Windows
+   - Fungsi : Menyediakan terminal Git Bash dan alat manajemen kode.
+   - Link   : https://git-scm.com
+   - Cara   : Download installer dan install dengan pilihan default.
+
+3. PM2 Process Manager
+   - Fungsi : Menjalankan server di background (latar belakang) 24/7 dan 
+              otomatis menyalakan kembali server jika crash atau laptop di-restart.
+   - Cara   : Buka Command Prompt (CMD) / PowerShell, lalu ketik perintah:
+              npm install -g pm2
+
+4. Cloudflared (Cloudflare Tunnel)
+   - Fungsi : Menghubungkan domain publik (iot.botek.my.id) dari internet 
+              ke port 3000 di laptop Anda secara aman tanpa perlu setting 
+              port-forwarding pada router Wi-Fi.
+   - Link   : https://github.com/cloudflare/cloudflared/releases
+
+--------------------------------------------------------------------------------
+BAGIAN 2: ATURAN DAN DETAIL COPY-PASTE BERKAS PROYEK
+--------------------------------------------------------------------------------
+
+[WAJIB DI-COPY DARI LAPTOP LAMA]
+1. sensor.db (BERKAS SANGAT PENTING!)
+   - Penjelasan : Merupakan database SQLite tempat menyimpan data pengguna, 
+                  hashed password, registrasi perangkat ESP32, nama relay, 
+                  serta seluruh riwayat (history) sensor.
+   - Catatan    : Jika file ini tidak di-copy, server di laptop baru akan 
+                  membuat database kosong baru, sehingga akun & device lama hilang.
+2. sensor.db-wal & sensor.db-shm (Jika ada)
+   - Penjelasan : File penopang transaksi aktif database SQLite.
+3. server.js & database.js
+   - Penjelasan : server.js adalah otak backend (HTTP API, WebSocket, MQTT Broker).
+                  database.js mengelola skema tabel database.
+4. package.json & package-lock.json
+   - Penjelasan : Daftar nama pustaka dependensi (express, ws, aedes, sqlite3, dll).
+5. Folder "public"
+   - Penjelasan : Seluruh antarmuka web dashboard (HTML, CSS, JS frontend).
+6. Folder "firmware"
+   - Penjelasan : Kode mentah (.ino) program ESP32.
+7. File .bat & .ps1 (start-botek.bat, stop-botek.bat, notify.ps1, register_tasks.ps1)
+   - Penjelasan : Script otomatisasi tombol cepat dan notifikasi Windows.
+
+[DILARANG / JANGAN DI-COPY]
+1. Folder "node_modules"
+   - Penjelasan : Berisi berkas biner C/C++ native Addons (sqlite3 & bcrypt) 
+                  yang telah dikompilasi khusus untuk CPU dan OS laptop lama.
+   - Dampak     : Jika di-copy ke laptop baru, server akan crash dengan error 
+                  "MODULE_NOT_FOUND" atau "Win32 Invalid Executable".
+   - Solusi     : Biarkan laptop baru membuat folder ini via "npm install".
+
+--------------------------------------------------------------------------------
+BAGIAN 3: LANGKAH EKSEKUSI TERPERINCI DI LAPTOP BARU (A - Z)
+--------------------------------------------------------------------------------
+
+Langkah 1: Menyalin Berkas Proyek
+- Salin folder BOTEK dari laptop lama (tanpa folder node_modules) ke laptop baru.
+- Contoh lokasi penyimpanan di laptop baru: D:\BOTEK
+
+Langkah 2: Membuka Terminal Administrator
+- Klik tombol Start, cari "PowerShell" atau "Command Prompt (CMD)".
+- Klik kanan lalu pilih "Run as Administrator".
+- Pindah ke folder proyek dengan mengetik:
+  cd D:\BOTEK
+
+Langkah 3: Menginstall Pustaka Dependensi (npm install)
+- Ketik perintah berikut lalu tekan Enter:
+  npm install
+- Penjelasan : Laptop baru akan membaca package.json, mengunduh pustaka resmi 
+               dari server NPM, serta merakit ulang biner C++ (sqlite3 & bcrypt) 
+               agar 100% cocok dengan OS & CPU laptop baru Anda. Tunggu hingga selesai.
+
+Langkah 4: Pengujian Server Pertama Kali (Manual Test)
+- Ketik perintah berikut lalu tekan Enter:
+  node server.js
+- Penjelasan : Perhatikan layar terminal. Jika muncul tulisan:
+               "Database connected"
+               "BOTEK HTTP Server & API running on port 3000"
+               "MQTT Broker running on port 1883"
+               "WebSocket Server running on port 8080"
+               Artinya server backend sudah BERHASIL berjalan!
+- Hentikan tes manual ini dengan menekan tombol keyboard: Ctrl + C
+
+Langkah 5: Mendaftarkan Server ke PM2 (Latar Belakang 24/7)
+- Ketik perintah berikut di terminal:
+  pm2 start server.js --name botek
+- Lalu simpan konfigurasi dengan mengetik:
+  pm2 save
+- Penjelasan : Server BOTEK sekarang telah aktif berjalan di latar belakang. 
+               Untuk mengecek statusnya kapan saja, ketik: pm2 list
+
+Langkah 6: Menghubungkan Cloudflare Tunnel (Domain iot.botek.my.id)
+- Masukkan token Cloudflare Tunnel Anda dengan mengetik:
+  cloudflared service install <TOKEN_CLOUDFLARE_TUNNEL_ANDA>
+- Atau jalankan tunnel melalui PM2 dengan perintah:
+  pm2 start "cloudflared tunnel run" --name cloudflared
+  pm2 save
+- Penjelasan : Perintah ini mengaktifkan jalur terowongan enkripsi agar request 
+               dari internet publik (iot.botek.my.id) masuk ke port 3000 laptop baru.
+
+--------------------------------------------------------------------------------
+BAGIAN 4: PENJELASAN KONEKSI HARDWARE ESP32
+--------------------------------------------------------------------------------
+
+- Seluruh kode program ESP32 pada folder "firmware" (seperti 
+  ESP32_Relay_WSS_WiFiManager.ino, ESP32_Relay_Online_HTTPS.ino, FIX_RELAY.ino) 
+  telah diatur menggunakan alamat domain publik:
+  "iot.botek.my.id"
+
+- PENJELASAN KUNCI :
+  ESP32 Anda TIDAK MENCARI IP LOCAL LAPTOP, melainkan mencari domain iot.botek.my.id.
+  Begitu Cloudflare Tunnel di laptop baru dinyalakan, domain tersebut secara 
+  otomatis diteruskan ke laptop baru.
+
+- KESIMPULAN :
+  Anda TIDAK PERLU MEMPROGRAM / DI-FLASH ULANG HARDWARE ESP32 SATUPUN. 
+  Semua alat ESP32 di lapangan akan LANGSUNG ONLINE dan terhubung ke laptop 
+  baru secara otomatis.
+
+--------------------------------------------------------------------------------
+BAGIAN 5: PENANGANAN SOLUSI MASALAH (TROUBLESHOOTING)
+--------------------------------------------------------------------------------
+
+1. Masalah : Error "MODULE_NOT_FOUND" / "bcrypt" / "sqlite3"
+   Penyebab: Folder node_modules tidak sengaja di-copy dari laptop lama.
+   Solusi  : Hapus folder node_modules pada laptop baru, lalu jalankan 
+             perintah "npm install" ulang di terminal.
+
+2. Masalah : Error "Database Kosong / User Admin Tidak Ditemukan"
+   Penyebab: Berkas sensor.db belum di-copy ke laptop baru.
+   Solusi  : Copypaste berkas sensor.db dari laptop lama ke folder D:\BOTEK 
+             pada laptop baru, lalu restart server dengan "pm2 restart botek".
+
+3. Masalah : Error "Port 3000 / 1883 Already in Use"
+   Penyebab: Port terpakai oleh proses lain atau instance Node yang tersangkut.
+   Solusi  : Jalankan perintah "npx kill-port 3000" dan "npx kill-port 1883", 
+             kemudian jalankan "pm2 restart botek".
+
+4. Masalah : Status Perangkat ESP32 OFFLINE di Dashboard Web
+   Penyebab: Service Cloudflare Tunnel belum berjalan atau token belum dimasukkan.
+   Solusi  : Ketik "pm2 list" di terminal, pastikan service "cloudflared" 
+             berstatus "online".
+
+================================================================================
+              DOKUMEN PANDUAN BOTEK IOT SERVER - SIAP DIBUKA DI NOTEPAD
+================================================================================

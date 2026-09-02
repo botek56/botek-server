@@ -281,7 +281,7 @@ function renderSensors(sensors) {
                         <div style="margin-bottom: 16px;">
                             <input type="range" id="dimmer-slider-${sensor.id}" class="dimmer-range-input" min="0" max="100" value="${dimmerVal}"
                                 style="background: linear-gradient(to right, #38bdf8 0%, #38bdf8 ${dimmerVal}%, rgba(255, 255, 255, 0.12) ${dimmerVal}%, rgba(255, 255, 255, 0.12) 100%);"
-                                oninput="onDimmerSliderInput(${sensor.id}, this.value)"
+                                oninput="onDimmerSliderInput(${sensor.id}, this.value, '${sensor.device_code}', '${sensor.sensor_name}')"
                                 onchange="onDimmerSliderChange('${sensor.device_code}', '${sensor.sensor_name}', this.value, ${sensor.id})">
                         </div>
 
@@ -675,7 +675,7 @@ function addNewGraphFromSelect() {
 
 function removeGraph(key) {
     if (chartInstances[key]) {
-        chartInstances[key].destroy();
+        try { chartInstances[key].destroy(); } catch (e) {}
         delete chartInstances[key];
     }
     activeGraphSensors = activeGraphSensors.filter(k => k !== key);
@@ -685,6 +685,14 @@ function removeGraph(key) {
 function renderAllGraphs() {
     const container = document.getElementById("graphsContainer");
     if (!container) return;
+
+    // Safely destroy existing chart instances before modifying/rebuilding DOM containers
+    Object.keys(chartInstances).forEach(key => {
+        if (chartInstances[key]) {
+            try { chartInstances[key].destroy(); } catch (e) {}
+            delete chartInstances[key];
+        }
+    });
 
     if (activeGraphSensors.length === 0) {
         container.innerHTML = `
@@ -729,26 +737,43 @@ function renderAllGraphs() {
 // ==========================
 async function loadSingleChart(sensorKey) {
     try {
+        const initialCanvas = document.getElementById("chart-canvas-" + sensorKey);
+        if (!initialCanvas) return;
+
         const response = await fetch("/api/device/" + deviceCode + "/history/" + sensorKey + "?_=" + Date.now());
         let data = await response.json();
 
+        // Re-verify canvas element exists after async fetch
         const canvasEl = document.getElementById("chart-canvas-" + sensorKey);
+        if (!canvasEl) return;
+
         if (!Array.isArray(data) || data.length === 0) {
             const currentSensorObj = currentSensorsData.find(s => s.sensor_name && s.sensor_name.toLowerCase() === sensorKey.toLowerCase());
             const fallbackValue = currentSensorObj ? (parseFloat(currentSensorObj.value) || 0) : 0;
             data = [{ time: new Date().toISOString(), value: fallbackValue }];
         }
 
-        const history = data.reverse();
+        const history = [...data].reverse();
         const labels = history.map(item => new Date(item.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
         const values = history.map(item => item.value);
 
-        // If chart instance already exists, update data smoothly in-place without flickering to 0
+        // Check if chart instance exists AND is still bound to the active DOM canvas element
         if (chartInstances[sensorKey]) {
             const existingChart = chartInstances[sensorKey];
-            existingChart.data.labels = labels;
-            existingChart.data.datasets[0].data = values;
-            existingChart.update('none');
+            if (existingChart.canvas === canvasEl) {
+                existingChart.data.labels = labels;
+                existingChart.data.datasets[0].data = values;
+                existingChart.update('none');
+                return;
+            } else {
+                // If canvas element was recreated, destroy stale chart instance
+                try { existingChart.destroy(); } catch (e) {}
+                delete chartInstances[sensorKey];
+            }
+        }
+
+        if (typeof Chart === "undefined") {
+            console.error("Chart.js library is not loaded.");
             return;
         }
 
@@ -2128,9 +2153,14 @@ function openExportTelemetryModal(sensors, defaultTargetName = null) {
     let sensorOptionsHtml = "";
     let isSelectedSet = false;
 
+    // Default option when modal opens without a specific sensor target: "Semua Sensor & Sakelar"
+    const isAllDefault = (!defaultTargetName || defaultTargetName === 'all');
+    if (isAllDefault) isSelectedSet = true;
+    sensorOptionsHtml += `<option value="all" ${isAllDefault ? "selected" : ""}>${t("all_sensors", "Semua Sensor & Sakelar")}</option>`;
+
     if (analogSensors.length > 0) {
         analogSensors.forEach(s => {
-            const isSel = (!isSelectedSet && (defaultTargetName === s.sensor_name || !defaultTargetName)) ? "selected" : "";
+            const isSel = (!isSelectedSet && defaultTargetName === s.sensor_name) ? "selected" : "";
             if (isSel) isSelectedSet = true;
             sensorOptionsHtml += `<option value="${s.sensor_name}" ${isSel}>${s.sensor_name} (${s.sensor_type || 'Custom'})</option>`;
         });
@@ -2143,9 +2173,6 @@ function openExportTelemetryModal(sensors, defaultTargetName = null) {
             sensorOptionsHtml += `<option value="${s.sensor_name}" ${isSel}>${s.sensor_name} (Relay ON/OFF)</option>`;
         });
     }
-
-    const isAllSel = (!isSelectedSet || defaultTargetName === 'all') ? "selected" : "";
-    sensorOptionsHtml += `<option value="all" ${isAllSel}>${t("all_sensors", "Semua Sensor & Sakelar")}</option>`;
 
     overlay = document.createElement("div");
     overlay.id = "exportTelemetryModalOverlay";
@@ -2217,13 +2244,13 @@ function openExportTelemetryModal(sensors, defaultTargetName = null) {
             <div style="margin-bottom: 14px;">
                 <label style="display: block; font-size: 11.5px; font-weight: 700; color: var(--text-muted); margin-bottom: 6px;" data-i18n="export_file_format_label">${t("export_file_format_label", "Format Berkas Unduhan")}</label>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                    <button type="button" id="btnExportCsv" onclick="downloadTelemetryCsv()" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.35); background: rgba(56, 189, 248, 0.12); color: #38bdf8; font-weight: 700; font-size: 11.5px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                    <button type="button" id="btnExportCsv" onclick="downloadTelemetryCsv()" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.35); background: rgba(56, 189, 248, 0.12); color: #38bdf8; font-weight: 700; font-size: 11.5px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
-                        <span>${t("export_format_csv", "Excel / CSV (.csv)")}</span>
+                        <span>Excel</span>
                     </button>
-                    <button type="button" id="btnExportPdf" onclick="downloadTelemetryPdfReport()" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(168, 85, 247, 0.35); background: rgba(168, 85, 247, 0.12); color: #c084fc; font-weight: 700; font-size: 11.5px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                    <button type="button" id="btnExportPdf" onclick="downloadTelemetryPdfReport()" style="padding: 10px; border-radius: 8px; border: 1px solid rgba(168, 85, 247, 0.35); background: rgba(168, 85, 247, 0.12); color: #c084fc; font-weight: 700; font-size: 11.5px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center;">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-                        <span>${t("export_format_pdf", "Laporan PDF (Siap Cetak)")}</span>
+                        <span>PDF</span>
                     </button>
                 </div>
             </div>
@@ -2255,12 +2282,69 @@ function formatExcelDateTime(isoString) {
     };
 }
 
+function setExportLoadingState(isLoading, targetFormat = "csv") {
+    const btnCsv = document.getElementById("btnExportCsv");
+    const btnPdf = document.getElementById("btnExportPdf");
+    const statCount = document.getElementById("exportStatCount");
+
+    const spinnerSvg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation: exportSpin 0.8s linear infinite;"><style>@keyframes exportSpin { 100% { transform: rotate(360deg); } }</style><path d="M12 2v4m0 12v4m-8-10H2m20 0h-4m-2.93-6.93l-2.83 2.83m-8.48 8.48l-2.83 2.83m0-14.14l2.83 2.83m8.48 8.48l2.83 2.83"></path></svg>`;
+
+    const disableBtn = (btn) => {
+        if (!btn) return;
+        btn.disabled = true;
+        btn.style.opacity = "0.6";
+        btn.style.cursor = "not-allowed";
+    };
+
+    const enableBtn = (btn) => {
+        if (!btn) return;
+        btn.disabled = false;
+        btn.style.opacity = "1";
+        btn.style.cursor = "pointer";
+    };
+
+    if (isLoading) {
+        disableBtn(btnCsv);
+        disableBtn(btnPdf);
+
+        if (targetFormat === "csv" && btnCsv) {
+            btnCsv.innerHTML = `${spinnerSvg}<span>Mengunduh...</span>`;
+        } else if (targetFormat === "pdf" && btnPdf) {
+            btnPdf.innerHTML = `${spinnerSvg}<span>Menyiapkan...</span>`;
+        }
+
+        if (statCount) {
+            statCount.innerHTML = `<span style="color: #f59e0b; font-weight: 700;">Memproses Data...</span>`;
+        }
+    } else {
+        enableBtn(btnCsv);
+        enableBtn(btnPdf);
+
+        if (btnCsv) {
+            btnCsv.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                <span>Excel</span>
+            `;
+        }
+        if (btnPdf) {
+            btnPdf.innerHTML = `
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7"></path><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                <span>PDF</span>
+            `;
+        }
+        updateExportModalStats();
+    }
+}
+
 async function downloadTelemetryCsv() {
     const curCode = deviceCode || (typeof getDeviceCode === 'function' ? getDeviceCode() : null) || (window.currentDevice && window.currentDevice.device_code) || localStorage.getItem("last_device_code") || "ESP32_ROOM_01";
     if (!curCode) {
         showToast("Kode perangkat tidak ditemukan.", "error");
         return;
     }
+
+    setExportLoadingState(true, "csv");
+
     const sensorChoice = document.getElementById("exportSensorChoice") ? document.getElementById("exportSensorChoice").value : "all";
     const startDate = document.getElementById("exportStartDate") ? document.getElementById("exportStartDate").value : "";
     const endDate = document.getElementById("exportEndDate") ? document.getElementById("exportEndDate").value : "";
@@ -2290,7 +2374,6 @@ async function downloadTelemetryCsv() {
         const devLocation = data.location || "Default Location";
         const devType = data.device_type || "IoT Controller";
 
-        // Calculate Analytics Summary
         let sum = 0;
         let maxVal = -Infinity;
         let minVal = Infinity;
@@ -2303,43 +2386,41 @@ async function downloadTelemetryCsv() {
             const rNameLower = (r.sensor_name || '').toLowerCase();
             const strV = String(rawV).toUpperCase();
 
-            // A component is ONLY a relay if its sensor_name strictly contains relay/sakelar/switch/control
             const isRowRelay = rNameLower.includes("relay") || rNameLower.includes("sakelar") || rNameLower.includes("switch") || rNameLower.includes("control");
 
             if (isRowRelay) {
                 if (strV === "ON" || strV === "1" || Number(rawV) === 1) onCount++;
                 else offCount++;
             } else {
-                numericCount++;
-                const v = (Number(rawV) && !isNaN(Number(rawV))) ? Number(rawV) : 6.6;
-                sum += v;
-                if (v > maxVal) maxVal = v;
-                if (v < minVal) minVal = v;
+                const v = Number(rawV);
+                if (!isNaN(v)) {
+                    numericCount++;
+                    sum += v;
+                    if (v > maxVal) maxVal = v;
+                    if (v < minVal) minVal = v;
+                }
             }
         });
 
-        const avgVal = numericCount > 0 ? (sum / numericCount).toFixed(1) : "6.6";
-        if (maxVal === -Infinity) maxVal = 6.7;
-        if (minVal === Infinity) minVal = 6.5;
+        const avgVal = numericCount > 0 ? (sum / numericCount).toFixed(2) : "-";
+        const maxValStr = maxVal !== -Infinity ? maxVal : "-";
+        const minValStr = minVal !== Infinity ? minVal : "-";
 
         const downloadTimeFormatted = formatExcelDateTime(new Date().toISOString()).full;
+        const allSensorsMeta = (typeof currentSensorsData !== 'undefined' && Array.isArray(currentSensorsData)) ? currentSensorsData : [];
 
+        // Ultra-Lightweight Plain Standard CSV (.csv) Generator - Fast, zero lag in Excel
         let csvContent = "\uFEFF";
-        
-        // 1. KOP LAPORAN (Ringkas & Rapi)
         csvContent += `"Informasi","Detail Perangkat"\n`;
         csvContent += `"Sistem","BOTEK IoT Platform"\n`;
         csvContent += `"Perangkat","${devName.replace(/"/g, '""')}"\n`;
         csvContent += `"Kode","${curCode}"\n`;
         csvContent += `"Tipe","${devType}"\n`;
         csvContent += `"Lokasi","${devLocation.replace(/"/g, '""')}"\n`;
-        csvContent += `"Waktu Unduh","${downloadTimeFormatted}"\n`;
-        csvContent += `"Retensi Data","Log disimpan otomatis selama 7 hari"\n\n`;
+        csvContent += `"Waktu Unduh","${downloadTimeFormatted}"\n\n`;
 
-        // 2. DATA TABLE HEADERS
-        csvContent += `No,Tanggal,Waktu,Kode Device,Sensor / Kontrol,Nilai Status,Satuan\n`;
+        csvContent += `No,Tanggal,Waktu,Kode Device,Sensor / Kontrol,Nilai Pembacaan,Satuan\n`;
 
-        // 3. DATA ROWS WITH STRICT SENSOR_NAME RELAY CHECK
         logsToExport.forEach((row, index) => {
             const dt = formatExcelDateTime(row.created_at || new Date().toISOString());
             const rawName = row.sensor_name || 'Komponen';
@@ -2356,28 +2437,35 @@ async function downloadTelemetryCsv() {
                 unitStr = "-";
             } else {
                 let numVal = Number(row.value);
-                displayVal = (!isNaN(numVal) && numVal !== 0) ? numVal : 6.6;
-                unitStr = "V";
-                if (rNameLower.includes("temp") || rNameLower.includes("suhu")) unitStr = "°C";
-                else if (rNameLower.includes("hum") || rNameLower.includes("lembab")) unitStr = "%";
-                else if (rNameLower.includes("amp") || rNameLower.includes("arus")) unitStr = "A";
+                displayVal = (!isNaN(numVal)) ? numVal : row.value;
+
+                const metaMatch = allSensorsMeta.find(s => s.sensor_name && s.sensor_name.toLowerCase() === rNameLower);
+                if (metaMatch && metaMatch.unit) {
+                    unitStr = metaMatch.unit;
+                } else {
+                    if (rNameLower.includes("temp") || rNameLower.includes("suhu")) unitStr = "°C";
+                    else if (rNameLower.includes("hum") || rNameLower.includes("lembab")) unitStr = "%";
+                    else if (rNameLower.includes("amp") || rNameLower.includes("arus")) unitStr = "A";
+                    else if (rNameLower.includes("volt") || rNameLower.includes("tegangan")) unitStr = "V";
+                    else if (rNameLower.includes("watt") || rNameLower.includes("daya")) unitStr = "W";
+                    else if (rNameLower.includes("lux") || rNameLower.includes("cahaya")) unitStr = "lux";
+                    else unitStr = "-";
+                }
             }
 
             const sName = `"${rawName.replace(/"/g, '""')}"`;
             csvContent += `${index + 1},"${dt.dateStr}","${dt.timeStr}","${row.device_code}",${sName},"${displayVal}","${unitStr}"\n`;
         });
 
-        // 4. SUMMARY ANALYTICS FOOTER
         csvContent += `\n"Statistik","Nilai"\n`;
         csvContent += `"Total Data Log",${logsToExport.length}\n`;
-
         if (numericCount === 0) {
             csvContent += `"Total Status ON",${onCount}\n`;
             csvContent += `"Total Status OFF",${offCount}\n`;
         } else {
             csvContent += `"Rata-rata (Avg)",${avgVal}\n`;
-            csvContent += `"Maksimum (Max)",${maxVal}\n`;
-            csvContent += `"Minimum (Min)",${minVal}\n`;
+            csvContent += `"Maksimum (Max)",${maxValStr}\n`;
+            csvContent += `"Minimum (Min)",${minValStr}\n`;
         }
 
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -2389,12 +2477,15 @@ async function downloadTelemetryCsv() {
         link.click();
         document.body.removeChild(link);
 
-        showToast(`Berhasil mengunduh Laporan Excel Telemetri (${logsToExport.length} data)!`, "success");
+        showToast(`✅ Berhasil mengunduh Berkas CSV Ringan (${logsToExport.length} data)!`, "success");
+
         if (document.getElementById("exportTelemetryModalOverlay")) {
             document.getElementById("exportTelemetryModalOverlay").remove();
         }
     } catch (e) {
-        showToast("Gagal mengunduh CSV: " + e.message, "error");
+        showToast("Gagal mengunduh data: " + e.message, "error");
+    } finally {
+        setExportLoadingState(false);
     }
 }
 
@@ -2404,11 +2495,14 @@ async function downloadTelemetryPdfReport() {
         showToast("Kode perangkat tidak ditemukan.", "error");
         return;
     }
-    const sensorChoice = document.getElementById("exportSensorChoice") ? document.getElementById("exportSensorChoice").value : "all";
-    const startDate = document.getElementById("exportStartDate") ? document.getElementById("exportStartDate").value : "";
-    const endDate = document.getElementById("exportEndDate") ? document.getElementById("exportEndDate").value : "";
+
+    setExportLoadingState(true, "pdf");
 
     try {
+        const sensorChoice = document.getElementById("exportSensorChoice") ? document.getElementById("exportSensorChoice").value : "all";
+        const startDate = document.getElementById("exportStartDate") ? document.getElementById("exportStartDate").value : "";
+        const endDate = document.getElementById("exportEndDate") ? document.getElementById("exportEndDate").value : "";
+
         let apiUrl = `/api/device/${encodeURIComponent(curCode)}/export-data?sensor=${encodeURIComponent(sensorChoice)}&limit=10000`;
         if (startDate) apiUrl += `&startDate=${encodeURIComponent(startDate)}`;
         if (endDate) apiUrl += `&endDate=${encodeURIComponent(endDate)}`;
@@ -2430,19 +2524,29 @@ async function downloadTelemetryPdfReport() {
 
         let tableRowsHtml = "";
         logsToExport.forEach((row, index) => {
-            const dateStr = new Date(row.created_at).toLocaleString("id-ID");
+            const dt = formatExcelDateTime(row.created_at || new Date().toISOString());
+            const rawName = row.sensor_name || 'Komponen';
+            const rNameLower = rawName.toLowerCase();
+            const strV = String(row.value).toUpperCase();
+
+            const isRowRelay = rNameLower.includes("relay") || rNameLower.includes("sakelar") || rNameLower.includes("switch") || rNameLower.includes("control");
+
+            let displayVal = row.value;
+            if (isRowRelay) {
+                displayVal = (strV === "ON" || strV === "1" || Number(row.value) === 1) ? "ON" : "OFF";
+            }
+
             tableRowsHtml += `
                 <tr>
                     <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; text-align: center;">${index + 1}</td>
-                    <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0;">${dateStr}</td>
-                    <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0284c7;">${row.sensor_name}</td>
-                    <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-weight: 800; text-align: right;">${row.value}</td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0;">${dt.full}</td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-weight: 700; color: #0284c7;">${rawName}</td>
+                    <td style="padding: 8px 12px; border-bottom: 1px solid #e2e8f0; font-weight: 800; text-align: right;">${displayVal}</td>
                 </tr>
             `;
         });
 
-        const printWin = window.open("", "_blank");
-        printWin.document.write(`
+        const pdfHtml = `
             <!DOCTYPE html>
             <html>
             <head>
@@ -2497,20 +2601,56 @@ async function downloadTelemetryPdfReport() {
                 <div style="margin-top: 30px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 12px;">
                     Dicetak secara otomatis dari BOTEK IoT System • Server Broker iot.botek.my.id
                 </div>
-
-                <script>
-                    window.onload = function() { window.print(); };
-                </script>
             </body>
             </html>
-        `);
-        printWin.document.close();
+        `;
 
+        // Dynamic hidden iframe printing (100% bypasses browser popup blockers safely)
+        let printIframe = document.getElementById("botekPdfPrintIframe");
+        if (!printIframe) {
+            printIframe = document.createElement("iframe");
+            printIframe.id = "botekPdfPrintIframe";
+            printIframe.style.position = "fixed";
+            printIframe.style.right = "0";
+            printIframe.style.bottom = "0";
+            printIframe.style.width = "0";
+            printIframe.style.height = "0";
+            printIframe.style.border = "0";
+            printIframe.style.visibility = "hidden";
+            document.body.appendChild(printIframe);
+        }
+
+        const frameDoc = printIframe.contentWindow ? printIframe.contentWindow.document : (printIframe.contentDocument || printIframe.document);
+        if (frameDoc) {
+            frameDoc.open();
+            frameDoc.write(pdfHtml);
+            frameDoc.close();
+
+            setTimeout(() => {
+                try {
+                    printIframe.contentWindow.focus();
+                    printIframe.contentWindow.print();
+                } catch (pe) {
+                    const win = window.open("", "_blank");
+                    if (win && win.document) {
+                        win.document.write(pdfHtml);
+                        win.document.close();
+                        win.print();
+                    } else {
+                        showToast("Peramban memblokir cetak PDF. Izinkan pop-up peramban.", "warning");
+                    }
+                }
+            }, 300);
+        }
+
+        showToast(`✅ Laporan PDF Telemetri siap dicetak (${logsToExport.length} data)!`, "success");
         if (document.getElementById("exportTelemetryModalOverlay")) {
             document.getElementById("exportTelemetryModalOverlay").remove();
         }
     } catch (e) {
         showToast("Gagal membuat laporan PDF: " + e.message, "error");
+    } finally {
+        setExportLoadingState(false);
     }
 }
 
@@ -2582,17 +2722,40 @@ void processCustomPromptLogic() {
 // ==========================
 // PWM DIMMER CONTROLLER HELPERS
 // ==========================
-function onDimmerSliderInput(sensorId, val) {
+let dimmerThrottleTimers = {};
+
+function sendDimmerLiveControl(deviceCode, controlName, val) {
+    fetch("/api/control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            device_code: deviceCode,
+            control_name: controlName,
+            status: String(val)
+        })
+    }).catch(err => console.error("Live dimmer error:", err));
+}
+
+function onDimmerSliderInput(sensorId, val, deviceCode, controlName) {
     const textEl = document.getElementById(`dimmer-val-text-${sensorId}`);
     const sliderEl = document.getElementById(`dimmer-slider-${sensorId}`);
     if (textEl) textEl.innerText = val;
     if (sliderEl) {
         sliderEl.style.background = `linear-gradient(to right, #38bdf8 0%, #38bdf8 ${val}%, rgba(255, 255, 255, 0.12) ${val}%, rgba(255, 255, 255, 0.12) 100%)`;
     }
+
+    if (deviceCode && controlName) {
+        if (!dimmerThrottleTimers[sensorId]) {
+            sendDimmerLiveControl(deviceCode, controlName, val);
+            dimmerThrottleTimers[sensorId] = setTimeout(() => {
+                delete dimmerThrottleTimers[sensorId];
+            }, 60);
+        }
+    }
 }
 
 async function onDimmerSliderChange(deviceCode, controlName, val, sensorId) {
-    onDimmerSliderInput(sensorId, val);
+    onDimmerSliderInput(sensorId, val, deviceCode, controlName);
     try {
         const response = await fetch("/api/control", {
             method: "POST",

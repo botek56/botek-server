@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Buku Kenangan Kita 📖✨</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Outfit:wght@300;400;600;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0c0802;
+      --primary: #ffb703;
+      --primary-glow: rgba(255, 183, 3, 0.5);
+      --secondary: #ffd166;
+      --accent: #fff3b0;
+      --gold: #ffc300;
+      --orange: #fb8500;
+      --glass: rgba(22, 14, 4, 0.88);
+      --glass-border: rgba(255, 215, 0, 0.35);
+      --text: #ffffff;
+      --text-sub: #eddcd2;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image:
+        radial-gradient(circle at 15% 15%, rgba(255, 183, 3, 0.22) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(251, 133, 0, 0.20) 0%, transparent 45%),
+        radial-gradient(circle at 50% 50%, #120b02 0%, #060401 100%);
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: hidden;
+      position: relative;
+      padding: 12px;
+    }
+
+    /* Particle Canvas */
+    #canvas-hearts {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* 3D BOOK CONTAINER OPTIMIZED FOR MOBILE */
+    .book-wrapper {
+      width: 100%;
+      max-width: 410px;
+      height: 90vh;
+      max-height: 620px;
+      perspective: 1200px;
+      z-index: 10;
+      position: relative;
+    }
+
+    .book {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.5s ease;
+      cursor: pointer;
+    }
+
+    .page {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: var(--glass);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1.5px solid var(--glass-border);
+      border-radius: 28px;
+      padding: 22px 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85),
+        inset 0 1px 0 rgba(255, 235, 150, 0.3),
+        0 0 25px rgba(255, 183, 3, 0.15);
+      backface-visibility: hidden;
+      transform-origin: left center;
+      transition: transform 0.7s cubic-bezier(0.645, 0.045, 0.355, 1), opacity 0.5s ease;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .page.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: rotateY(0deg);
+      z-index: 10;
+    }
+
+    .page.flipped {
+      transform: rotateY(-180deg);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* COVER PAGE STYLING */
+    .cover-card {
+      background: linear-gradient(145deg, rgba(38, 25, 7, 0.96), rgba(12, 8, 2, 0.98));
+      border: 2px solid var(--gold);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), inset 0 0 35px rgba(255, 183, 3, 0.2);
+      justify-content: center;
+      gap: 22px;
+    }
+
+    .cover-icon {
+      font-size: 80px;
+      animation: float 3s ease-in-out infinite;
+      filter: drop-shadow(0 0 30px var(--primary-glow));
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0) rotate(0deg);
+      }
+
+      50% {
+        transform: translateY(-12px) rotate(4deg);
+      }
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 18px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(255, 183, 3, 0.3), rgba(251, 133, 0, 0.3));
+      border: 1px solid rgba(255, 183, 3, 0.5);
+      color: var(--secondary);
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      box-shadow: 0 4px 15px rgba(255, 183, 3, 0.2);
+    }
+
+    h1.book-title {
+      font-size: 2.2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #ffffff 0%, var(--secondary) 50%, var(--primary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.25;
+    }
+
+    .book-subtitle {
+      color: var(--text-sub);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .pulse-hint {
+      font-size: 0.82rem;
+      color: var(--gold);
+      font-weight: 600;
+      animation: pulseText 2s infinite;
+      margin-top: 10px;
+    }
+
+    @keyframes pulseText {
+
+      0%,
+      100% {
+        opacity: 0.5;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.04);
+      }
+    }
+
+    /* LETTER PAGE */
+    .letter-title {
+      font-family: 'Caveat', cursive;
+      font-size: 2.4rem;
+      color: var(--secondary);
+      margin-bottom: 8px;
+    }
+
+    .letter-body {
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: #f5ece1;
+      white-space: pre-line;
+      text-align: left;
+    }
+
+    .letter-signature {
+      font-family: 'Caveat', cursive;
+      font-size: 1.9rem;
+      color: var(--gold);
+      text-align: right;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    /* LUXURIOUS POLAROID FRAME */
+    .polaroid-frame {
+      background: #ffffff;
+      padding: 12px 12px 22px 12px;
+      border-radius: 8px;
+      box-shadow: 0 16px 35px rgba(0, 0, 0, 0.75), 0 2px 8px rgba(0, 0, 0, 0.3);
+      width: 100%;
+      max-width: 330px;
+      height: auto;
+      max-height: 480px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transform: rotate(-1.5deg);
+      transition: transform 0.3s ease;
+      margin: auto 0;
+      position: relative;
+    }
+
+    .polaroid-frame:nth-child(even) {
+      transform: rotate(1.5deg);
+    }
+
+    /* GOLD TAPE ACCENT ON POLAROID */
+    .polaroid-tape {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 75px;
+      height: 22px;
+      background: rgba(255, 215, 0, 0.65);
+      border: 1px dashed rgba(255, 255, 255, 0.8);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      z-index: 5;
+    }
+
+    .polaroid-img {
+      width: 100%;
+      height: 330px;
+      object-fit: cover;
+      border-radius: 4px;
+      background-color: #fff9e6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 60px;
+      overflow: hidden;
+    }
+
+    .polaroid-img img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .polaroid-caption {
+      font-family: 'Caveat', cursive;
+      color: #2b1d04;
+      font-size: 1.6rem;
+      font-weight: 700;
+      text-align: center;
+      margin-top: 10px;
+      line-height: 1.2;
+    }
+  </style>
+</head>
+
+<body onclick="playSongMP3()" ontouchstart="playSongMP3()" onpointerdown="playSongMP3()">
+
+  <!-- Floating Heart Particles -->
+  <canvas id="canvas-hearts"></canvas>
+
+  <!-- HTML5 Audio Element (Lagu MP3 bergema.mp3 Terputar Otomatis) -->
+  <audio id="audioPlayer" loop preload="auto">
+    <source src="bergema.mp3" type="audio/mpeg">
+    <source src="/bergema.mp3" type="audio/mpeg">
+  </audio>
+
+  <!-- 3D BOOK WRAPPER -->
+  <div class="book-wrapper">
+    <div class="book" id="bookContainer" onclick="handleBookClick(event)">
+
+      <!-- HALAMAN 0: SAMPUL DEPAN (COVER) -->
+      <div class="page cover-card active" id="page-0">
+        <div class="badge">Buat Arell 📖✨</div>
+        <div class="cover-icon">💖</div>
+        <h1 class="book-title">K</h1>
+        <p class="book-subtitle">.</p>
+        <div class="pulse-hint">Geser ➔ / Sentuh Layar untuk Membuka 💖</div>
+      </div>
+
+      <!-- HALAMAN 1: SURAT CINTA -->
+      <div class="page" id="page-1" style="justify-content: center; gap: 15px;">
+        <div class="badge">Arell 💌</div>
+        <div style="width: 100%;">
+          <h2 class="letter-title">Haiii Saaayang, ✨</h2>
+          <div class="letter-body">
+            Terima kasih yaa udah selau ada buat aku, udah mau sama aku, Aku bahagia banget punya kamu
+
+            Setiap momen sama kamu itu selalu berharga. Semoga kita bisa terus jalan bareng, saling dukung, dan bahagia
+            terus sama-sama ya! 🌟
+          </div>
+          <div class="letter-signature">- Seseorang yang menyayangimu 💛</div>
+        </div>
+      </div>
+
+      <!-- HALAMAN FOTO 2 S/D 14 (DYNAMICS VIA JS) -->
+      <!-- Generated via JS below -->
+
+      <!-- HALAMAN PENUTUP (SAMPUL BELAKANG) -->
+      <div class="page cover-card" id="page-final">
+        <div class="badge">Terima Kasih 💛</div>
+        <div class="cover-icon">🎉🥰✨</div>
+        <h1 class="book-title">I Love You<br>So Much! 💖</h1>
+        <p class="book-subtitle">Terima kasih telah selalu mewarnai hari-hariku dengan indah.</p>
+        <div class="pulse-hint">Sentuh Layar untuk Membaca Lagi 🔄</div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================
+       1. DYNAMICALLY GENERATE 13 PHOTO PAGES
+       ========================================== */
+    const photoCaptions = [
+      "Pertama kali minta foto bareng hehe ✨",
+      "Nongkrong di chatime 💖",
+      " 🌟",
+      "Kenangan manis yang tak terlupakan 🥰",
+      "Makan Seafood Tumpah 💛",
+      "Setiap detik bersamamu begitu indah ✨",
+      "Kita Photobox di living 💖",
+      "Stiker kita 🥰",
+      "Bantal Muka aku wkwk 🌟",
+      "Kangen jam aku ",
+      "Bahagia Terus ya SayangQ✨",
+      "Selfie pake iphone 12 mini hehe 💖",
+      "Aku sayang kamu selamanya! 🥰"
+    ];
+
+    const book = document.getElementById('bookContainer');
+    const finalPage = document.getElementById('page-final');
+
+    for (let i = 1; i <= 13; i++) {
+      const pageDiv = document.createElement('div');
+      pageDiv.className = 'page';
+      pageDiv.id = `page-${i + 1}`;
+
+      const capText = photoCaptions[i - 1] || "Momen Manis Kita ✨";
+
+      pageDiv.innerHTML = `
+        <div class="polaroid-frame">
+          <div class="polaroid-tape"></div>
+          <div class="polaroid-img">
+            <img src="photo${i}.jpeg" onerror="this.src='photo${i}.jpg'" alt="Foto ${i}">
+          </div>
+          <div class="polaroid-caption">${capText}</div>
+        </div>
+      `;
+
+      book.insertBefore(pageDiv, finalPage);
+    }
+
+    /* ==========================================
+       2. TAP & SWIPE FLIPBOOK NAVIGATION
+       ========================================== */
+    let currentPageIndex = 0;
+    const totalPages = 15;
+
+    function updatePageStates() {
+      for (let i = 0; i <= 14; i++) {
+        let p = document.getElementById(`page-${i}`);
+        if (i === 14) p = document.getElementById('page-final');
+
+        if (!p) continue;
+
+        if (i < currentPageIndex) {
+          p.className = 'page flipped';
+        } else if (i === currentPageIndex) {
+          p.className = 'page active';
+        } else {
+          p.className = 'page';
+        }
+      }
+    }
+
+    function nextPage(e) {
+      if (e) e.stopPropagation();
+      playSongMP3();
+      if (currentPageIndex < totalPages - 1) {
+        currentPageIndex++;
+        updatePageStates();
+      } else {
+        currentPageIndex = 0; // Loop back to start from cover
+        updatePageStates();
+      }
+    }
+
+    function prevPage(e) {
+      if (e) e.stopPropagation();
+      playSongMP3();
+      if (currentPageIndex > 0) {
+        currentPageIndex--;
+        updatePageStates();
+      }
+    }
+
+    function handleBookClick(e) {
+      const rect = book.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+
+      if (clickX > rect.width * 0.35) {
+        nextPage();
+      } else {
+        prevPage();
+      }
+    }
+
+    // Touch Swipe Support
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    document.addEventListener('touchstart', e => {
+      touchStartX = e.changedTouches[0].screenX;
+      playSongMP3();
+    }, false);
+
+    document.addEventListener('touchend', e => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }, false);
+
+    function handleSwipe() {
+      if (touchEndX < touchStartX - 30) {
+        nextPage();
+      }
+      if (touchEndX > touchStartX + 30) {
+        prevPage();
+      }
+    }
+
+    /* ==========================================
+       3. PURE MP3 AUTOMATIC AUDIO ENGINE
+       ========================================== */
+    let isPlaying = false;
+    const audioPlayer = document.getElementById('audioPlayer');
+
+    function playSongMP3() {
+      if (isPlaying || !audioPlayer) return;
+
+      audioPlayer.play().then(() => {
+        isPlaying = true;
+      }).catch(err => { });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      updatePageStates();
+      playSongMP3();
+    });
+    window.addEventListener('load', playSongMP3);
+    document.addEventListener('click', playSongMP3);
+    document.addEventListener('touchstart', playSongMP3);
+    document.addEventListener('pointerdown', playSongMP3);
+    document.addEventListener('scroll', playSongMP3);
+
+    /* ==========================================
+       4. FLOATING GOLDEN PARTICLES CANVAS
+       ========================================== */
+    const canvas = document.getElementById('canvas-hearts');
+    const ctx = canvas.getContext('2d');
+
+    let particles = [];
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class HeartParticle {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = canvas.height + 20;
+        this.size = Math.random() * 12 + 6;
+        this.speedY = Math.random() * 1.5 + 0.5;
+        this.speedX = Math.random() * 0.8 - 0.4;
+        this.opacity = Math.random() * 0.6 + 0.2;
+        this.color = `hsla(${Math.random() * 25 + 40}, 100%, 65%, ${this.opacity})`;
+      }
+      update() {
+        this.y -= this.speedY;
+        this.x += this.speedX;
+        if (this.y < -30) this.reset();
+      }
+      draw() {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        const d = this.size;
+        ctx.moveTo(0, 0);
+        ctx.bezierCurveTo(-d / 2, -d / 2, -d, d / 3, 0, d);
+        ctx.bezierCurveTo(d, d / 3, d / 2, -d / 2, 0, 0);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    for (let i = 0; i < 35; i++) {
+      particles.push(new HeartParticle());
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      requestAnimationFrame(animate);
+    }
+    animate();
+  </script>
+</body>
+
+</html>
